@@ -1,4 +1,4 @@
-export const oxfordRealEstateData = {
+export const oxfordRealEstateData: ListingObject = {
   country: 'England',
   result_count: 455,
   longitude: -1.210158,

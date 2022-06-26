@@ -2,9 +2,6 @@ import GoogleMapReact from 'google-map-react';
 import { useEffect, useRef, useState } from 'react';
 import { oxfordRealEstateData } from '../util/database';
 
-// use this instead of oxfordRealEstateData once fetching from api
-// import { filteredListing } from '../util/database';
-
 type PkgBounds = {
   nwLng: number;
   seLat: number;
@@ -12,12 +9,18 @@ type PkgBounds = {
   nwLat: number;
 };
 
-type MarkerObject = {
+type ClusterObject = {
   outcode: string;
   propertyAmount: number;
   averageCost: number;
   coordinates: { lat: number; lng: number };
   listing_ids: string[];
+};
+
+type MarkerObject = {
+  cost: number;
+  coordinates: { lat: number; lng: number };
+  listing_id: string;
 };
 
 const Marker = ({ children }: any) => children;
@@ -29,21 +32,119 @@ export default function Map() {
   const [mapZoom, setMapZoom] = useState(7);
   const [mapBounds, setMapBounds] = useState<PkgBounds>();
   const [mapHasLoaded, setMapHasLoaded] = useState<boolean>(false);
-  const [objectsToDisplay, setObjectsToDisplay] = useState<MarkerObject[]>();
+  const [objectsToDisplay, setObjectsToDisplay] = useState<
+    MarkerObject[] | ClusterObject[] | null
+  >(null);
+
+  /* const router = useRouter();
+
+  change data recieved by router to value and identifier recieved by autocomplete once fetching from autocomplete
+
+  useEffect(() => {
+    const options = {
+      method: 'GET',
+      url: 'https://zoopla.p.rapidapi.com/properties/list',
+      params: {
+        area: router.query.search,
+        identifier: 'oxford',
+        category: 'residential',
+        order_by: 'age',
+        ordering: 'descending',
+        page_number: '1',
+        page_size: '40',
+      },
+      headers: {
+        'X-RapidAPI-Key': 'f43f860297mshbe94faf5bb3d17dp1061e2jsn23b0da03b68e',
+        'X-RapidAPI-Host': 'zoopla.p.rapidapi.com',
+      },
+    };
+
+    let data: ListingObject | null = null;
+
+    axios
+      .request(options)
+      .then(function (response) {
+        console.log(response.data);
+        data = response.data;
+      })
+      .catch(function (error) {
+        console.error(error);
+      });
+  }, [router.query]); */
 
   const townCoordinates = {
     lat: oxfordRealEstateData.latitude,
     lng: oxfordRealEstateData.longitude,
   };
 
-  const extendBounds = () => {
-    oxfordRealEstateData.listing.forEach((listing) => {
-      markerBounds.extend({ lat: listing.latitude, lng: listing.longitude });
+  const extendBounds = (markers: MarkerObject[] | ListingObject) => {
+    if (Array.isArray(markers)) {
+      markers.forEach((marker) => {
+        markerBounds.extend({
+          lat: marker.coordinates.lat,
+          lng: marker.coordinates.lng,
+        });
+      });
+    } else {
+      markers.listing.forEach((listing) => {
+        markerBounds.extend({
+          lat: listing.latitude,
+          lng: listing.longitude,
+        });
+      });
+    }
+  };
+
+  const checkIfMarkerObjects = (
+    objects: MarkerObject[] | ClusterObject[] | null,
+  ) => {
+    if (objects === null) {
+      return false;
+    }
+
+    let result = true;
+
+    for (let i = 0; i < objects.length; i++) {
+      if (!('listing_id' in objects[i])) {
+        result = false;
+        break;
+      }
+    }
+
+    return result;
+  };
+
+  const convertClusterToMarkers = (cluster: ClusterObject) => {
+    const markers: MarkerObject[] = [];
+
+    cluster.listing_ids.forEach((id) => {
+      const currentListing: Listing[] = oxfordRealEstateData.listing.filter(
+        (listing) => {
+          return id === listing.listing_id;
+        },
+      );
+
+      const tmpMarker: MarkerObject = {
+        cost: currentListing[0].rental_prices.per_month,
+        coordinates: {
+          lat: currentListing[0].latitude,
+          lng: currentListing[0].longitude,
+        },
+        listing_id: currentListing[0].listing_id,
+      };
+
+      markers.push(tmpMarker);
     });
+
+    return markers;
+  };
+
+  const changeObjectsToDisplay = (markers: MarkerObject[]) => {
+    setObjectsToDisplay(markers);
   };
 
   const initializeClusters = () => {
-    let clusters = new Set<MarkerObject>();
+    let clusters = new Set<ClusterObject>();
 
     oxfordRealEstateData.listing.forEach((listing) => {
       if (
@@ -94,6 +195,13 @@ export default function Map() {
   };
 
   useEffect(() => {
+    if (checkIfMarkerObjects(objectsToDisplay)) {
+      extendBounds(objectsToDisplay as MarkerObject[]);
+      mapRef.current.fitBounds(markerBounds);
+    }
+  }, [objectsToDisplay]);
+
+  useEffect(() => {
     initializeClusters();
   }, []);
 
@@ -105,7 +213,7 @@ export default function Map() {
           lat: townCoordinates.lat,
           lng: townCoordinates.lng,
         }}
-        defaultZoom={20}
+        defaultZoom={17}
         yesIWantToUseGoogleMapApiInternals
         onGoogleApiLoaded={({ map }) => {
           mapRef.current = map;
@@ -120,27 +228,48 @@ export default function Map() {
           });
         }}
         onTilesLoaded={() => {
-          markerBounds = mapRef.current.getBounds();
-          extendBounds();
           if (!mapHasLoaded) {
+            markerBounds = mapRef.current.getBounds();
+            extendBounds(oxfordRealEstateData);
             mapRef.current.fitBounds(markerBounds);
+            setMapHasLoaded(true);
           }
-          setMapHasLoaded(true);
         }}
       >
-        {objectsToDisplay?.map((cluster) => {
+        {objectsToDisplay?.map((mapObject) => {
+          if ('listing_id' in mapObject) {
+            return (
+              <Marker
+                key={mapObject.listing_id}
+                lat={mapObject.coordinates.lat}
+                lng={mapObject.coordinates.lng}
+              >
+                <button
+                  onClick={() => {
+                    window.location.href = `http://localhost:3000/details/${mapObject.listing_id}`;
+                  }}
+                >
+                  {mapObject.cost}
+                </button>
+              </Marker>
+            );
+          }
+
           return (
             <Marker
-              key={cluster.outcode}
-              lat={cluster.coordinates.lat}
-              lng={cluster.coordinates.lng}
+              key={mapObject.outcode}
+              lat={mapObject.coordinates.lat}
+              lng={mapObject.coordinates.lng}
             >
               <button
                 onClick={() => {
-                  mapRef.current.setZoom(10);
+                  changeObjectsToDisplay(convertClusterToMarkers(mapObject));
+                  mapRef.current.setCenter(mapObject.coordinates);
+                  mapRef.current.setZoom(17);
+                  markerBounds = mapRef.current.getBounds();
                 }}
               >
-                {cluster.averageCost}
+                {mapObject.averageCost}
               </button>
             </Marker>
           );
