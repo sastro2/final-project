@@ -1,3 +1,13 @@
+import camelcaseKeys from 'camelcase-keys';
+import { config } from 'dotenv-safe';
+import postgres from 'postgres';
+
+config();
+
+// for heroku const sql = postgres({ ssl: { rejectUnauthorized: false } });
+
+const sql = postgres();
+
 export const oxfordRealEstateData: ListingObject = {
   country: 'England',
   result_count: 455,
@@ -931,3 +941,133 @@ export let filteredListings: ListingObject | null;
 export const setFilteredListing = (listing: ListingObject | null) => {
   filteredListings = listing;
 };
+
+export async function createUser(username: string, passwordHash: string) {
+  const [user] = await sql<[User]>`
+    INSERT INTO users
+      (username, password_hash)
+    VALUES
+      (${username}, ${passwordHash})
+    RETURNING
+      id,
+      username
+  `;
+  return camelcaseKeys(user);
+}
+
+export async function getUserByUsername(username: string) {
+  const [user] = await sql<[{ id: number } | undefined]>`
+    SELECT
+      id,
+      first_name,
+      last_name,
+      email
+     FROM users WHERE username = ${username}
+  `;
+  return user && camelcaseKeys(user);
+}
+
+export async function getUserWithPasswordHashByUsername(username: string) {
+  const [user] = await sql<[UserWithPasswordHash | undefined]>`
+    SELECT
+      *
+    FROM
+      users
+    WHERE
+      username = ${username};
+  `;
+
+  return user && camelcaseKeys(user);
+}
+
+export async function createProfile(
+  profileType: string,
+  roleId: number,
+  userIds: string,
+) {
+  const [profile] = await sql<[Profile]>`
+    INSERT INTO profiles
+      (profile_type, role_id, user_ids)
+    VALUES
+      (${profileType}, ${roleId}, ${userIds})
+    RETURNING
+      id,
+      profile_type,
+      role_id,
+      user_ids
+  `;
+
+  return camelcaseKeys(profile);
+}
+
+export async function createAccessToken(token: string, userId: number) {
+  const [accessToken] = await sql<[AccessToken]>`
+    INSERT INTO accessTokens
+      (token, user_id)
+    VALUES
+      (${token}, ${userId})
+    RETURNING
+      id,
+      token
+  `;
+
+  await deleteExpiredAccessTokens();
+
+  return camelcaseKeys(accessToken);
+}
+
+export async function createRefreshToken(token: string, userId: number) {
+  const [refreshToken] = await sql<[AccessToken]>`
+    INSERT INTO refreshTokens
+      (token, wasUsed, user_id)
+    VALUES
+      (${token}, false, ${userId})
+    RETURNING
+      id,
+      token
+  `;
+
+  await deleteExpiredAccessTokens();
+
+  return camelcaseKeys(refreshToken);
+}
+
+export async function deleteExpiredAccessTokens() {
+  const sessions = await sql<AccessToken[]>`
+    DELETE FROM
+      accessTokens
+    WHERE
+      expiry_timestamp < NOW()
+    RETURNING *
+  `;
+
+  return sessions.map((session) => camelcaseKeys(session));
+}
+
+export async function createCsrfSalt(salt: string) {
+  const [csrfSalt] = await sql<[CsrfSalt]>`
+    INSERT INTO csrfSalts
+      (salt)
+    VALUES
+      (${salt})
+    RETURNING
+      id,
+      salt
+  `;
+
+  return camelcaseKeys(csrfSalt);
+}
+
+export async function getCsrfSalt(id: number) {
+  const [csrfSalt] = await sql<[CsrfSalt]>`
+    SELECT
+      id,
+    	salt
+    FROM
+      csrfSalts
+    WHERE
+      id = ${id}
+  `;
+
+  return camelcaseKeys(csrfSalt);
+}

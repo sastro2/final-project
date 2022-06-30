@@ -379,15 +379,43 @@ declare global {
         council_tax_band?: undefined;
       };
 
-      type AutocompleteObject = {
-        area_name: string;
-        street: string;
-        suggestions: {
-          identifier: string;
-          value: string;
-        }[]
-        county: string;
-        town: string;
-        postcode: string;
-      }
+  type AutocompleteObject = {
+    area_name: string;
+    street: string;
+    suggestions: {
+      identifier: string;
+      value: string;
+    }[];
+    county: string;
+    town: string;
+    postcode: string;
+  };
+
+  export type User = {
+    id: number;
+    username: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+
+  export type UserWithPasswordHash = User & { passwordHash: string };
+
+  export type Profile = {
+    id: number;
+    profileType: string;
+    roleId: number;
+    userIds: string;
+  };
+
+  export type AccessToken = {
+    id: number;
+    token: string;
+    userId: number;
+  };
+
+  export type CsrfSalt = {
+    id: number;
+    salt: string;
+  };
 }

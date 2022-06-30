@@ -14,28 +14,30 @@ export default function Home() {
   const [maxPrice, setMaxPrice] = useState<number>(0);
   // const [autocompleteResult, setAutocompleteResult] = useState<string[]>([]);
 
+  console.log(process.env.PGHOST);
+
   const bedroomsRef = useRef<HTMLSelectElement>(null);
   const maxPriceRef = useRef<HTMLSelectElement>(null);
 
   // const deferredInput: string = useDeferredValue(searchInput);
 
-  // useMemo(() => {
-  // const options = {
-  // method: 'GET',
-  // url: 'https://zoopla.p.rapidapi.com/auto-complete',
-  // params: {search_term: deferredInput},
-  // headers: {
-  // 'X-RapidAPI-Key': 'f43f860297mshbe94faf5bb3d17dp1061e2jsn23b0da03b68e',
-  // 'X-RapidAPI-Host': 'zoopla.p.rapidapi.com'
-  // }
-  // };
+  // const autocomplete = useMemo(() => {
+  //  const options = {
+  //  method: 'GET',
+  //  url: 'https://zoopla.p.rapidapi.com/auto-complete',
+  //  params: {search_term: deferredInput},
+  //  headers: {
+  //  'X-RapidAPI-Key': 'f43f860297mshbe94faf5bb3d17dp1061e2jsn23b0da03b68e',
+  //  'X-RapidAPI-Host': 'zoopla.p.rapidapi.com'
+  //  }
+  //  };
 
-  // let data: AutocompleteObject | null = null;
+  //  let data: AutocompleteObject | null = null;
 
-  // axios.request(options).then(function (response) {
-  // data = response.data;
-  // }).catch(function (error) {
-  // console.error(error);
+  //  axios.request(options).then(function (response) {
+  //  data = response.data;
+  //  }).catch(function (error) {
+  //  console.error(error);
   // });
 
   // return data;
