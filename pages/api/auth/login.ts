@@ -6,6 +6,7 @@ import { createSerializedRegisterTokenCookie } from '../../../util/cookies';
 import {
   createAccessToken,
   createRefreshToken,
+  getIs2faEnabledById,
   getUserWithPasswordHashByUsername,
 } from '../../../util/database';
 
@@ -22,7 +23,15 @@ type LoginNextApiRequest = Omit<NextApiRequest, 'body'> & {
 
 export type LoginResponseBody =
   | { errors: { message: string }[] }
-  | { user: Pick<User, 'id'> };
+  | { user: Pick<User, 'id'> }
+  | {
+      twoFaData: {
+        has2Fa: boolean;
+        userId: number;
+        username: string;
+        password: string;
+      };
+    };
 
 export default async function loginHandler(
   request: LoginNextApiRequest,
@@ -90,6 +99,20 @@ export default async function loginHandler(
             message: 'Username or password does not match',
           },
         ],
+      });
+      return;
+    }
+
+    const twofaEnabled = await getIs2faEnabledById(userWithPasswordHash.id);
+
+    if (twofaEnabled.has2Fa) {
+      response.status(200).json({
+        twoFaData: {
+          has2Fa: true,
+          userId: userWithPasswordHash.id,
+          username: request.body.username,
+          password: request.body.password,
+        },
       });
       return;
     }

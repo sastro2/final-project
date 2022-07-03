@@ -1,6 +1,8 @@
+import axios from 'axios';
 import GoogleMapReact from 'google-map-react';
+import { useRouter } from 'next/router';
 import { useEffect, useRef, useState } from 'react';
-import { oxfordRealEstateData } from '../util/database';
+import { oxfordRealEstateData } from '../util/tempData';
 
 type PkgBounds = {
   nwLng: number;
@@ -26,6 +28,7 @@ type MarkerObject = {
 const Marker = ({ children }: any) => children;
 
 let markerBounds: any;
+let propertyData: ListingObject | null;
 
 export default function Map() {
   const mapRef = useRef<any>();
@@ -35,47 +38,62 @@ export default function Map() {
   const [objectsToDisplay, setObjectsToDisplay] = useState<
     MarkerObject[] | ClusterObject[] | null
   >(null);
+  const [rerender, setRerender] = useState<boolean>(false);
+  const router = useRouter();
 
-  /* const router = useRouter();
-
-  change data recieved by router to value and identifier recieved by autocomplete once fetching from autocomplete
+  // change data recieved by router to value and identifier recieved by autocomplete once fetching from autocomplete
 
   useEffect(() => {
-    const options = {
-      method: 'GET',
-      url: 'https://zoopla.p.rapidapi.com/properties/list',
-      params: {
-        area: router.query.search,
-        identifier: 'oxford',
-        category: 'residential',
-        order_by: 'age',
-        ordering: 'descending',
-        page_number: '1',
-        page_size: '40',
-      },
-      headers: {
-        'X-RapidAPI-Key': 'f43f860297mshbe94faf5bb3d17dp1061e2jsn23b0da03b68e',
-        'X-RapidAPI-Host': 'zoopla.p.rapidapi.com',
-      },
+    async function fetchData() {
+      console.log('1');
+      const options = {
+        method: 'GET',
+        url: 'https://zoopla.p.rapidapi.com/properties/list',
+        params: {
+          area: 'Oxford, Oxfordshire',
+          identifier: 'oxford',
+          category: 'residential',
+          order_by: 'age',
+          ordering: 'descending',
+          page_number: '1',
+          page_size: '40',
+        },
+        headers: {
+          'X-RapidAPI-Key':
+            'f43f860297mshbe94faf5bb3d17dp1061e2jsn23b0da03b68e',
+          'X-RapidAPI-Host': 'zoopla.p.rapidapi.com',
+        },
+      };
+
+      let data: ListingObject | null = null;
+
+      await axios
+        .request(options)
+        .then(function (response) {
+          console.log(response.data);
+          data = response.data;
+        })
+        .catch(function (error) {
+          console.error(error);
+        });
+
+      console.log(data);
+
+      propertyData = data;
+      setRerender(true);
+    }
+
+    fetchData();
+  }, []);
+
+  let townCoordinates;
+
+  if (propertyData) {
+    townCoordinates = {
+      lat: propertyData.latitude,
+      lng: propertyData.longitude,
     };
-
-    let data: ListingObject | null = null;
-
-    axios
-      .request(options)
-      .then(function (response) {
-        console.log(response.data);
-        data = response.data;
-      })
-      .catch(function (error) {
-        console.error(error);
-      });
-  }, [router.query]); */
-
-  const townCoordinates = {
-    lat: oxfordRealEstateData.latitude,
-    lng: oxfordRealEstateData.longitude,
-  };
+  }
 
   const extendBounds = (markers: MarkerObject[] | ListingObject) => {
     if (Array.isArray(markers)) {
@@ -115,28 +133,30 @@ export default function Map() {
   };
 
   const convertClusterToMarkers = (cluster: ClusterObject) => {
-    const markers: MarkerObject[] = [];
+    if (propertyData !== null) {
+      const markers: MarkerObject[] = [];
 
-    cluster.listing_ids.forEach((id) => {
-      const currentListing: Listing[] = oxfordRealEstateData.listing.filter(
-        (listing) => {
-          return id === listing.listing_id;
-        },
-      );
+      cluster.listing_ids.forEach((id) => {
+        const currentListing: Listing[] = propertyData!.listing.filter(
+          (listing) => {
+            return id === listing.listing_id;
+          },
+        );
 
-      const tmpMarker: MarkerObject = {
-        cost: currentListing[0].rental_prices.per_month,
-        coordinates: {
-          lat: currentListing[0].latitude,
-          lng: currentListing[0].longitude,
-        },
-        listing_id: currentListing[0].listing_id,
-      };
+        const tmpMarker: MarkerObject = {
+          cost: currentListing[0].rental_prices.per_month,
+          coordinates: {
+            lat: currentListing[0].latitude,
+            lng: currentListing[0].longitude,
+          },
+          listing_id: currentListing[0].listing_id,
+        };
 
-      markers.push(tmpMarker);
-    });
+        markers.push(tmpMarker);
+      });
 
-    return markers;
+      return markers;
+    }
   };
 
   const changeObjectsToDisplay = (markers: MarkerObject[]) => {
@@ -144,54 +164,58 @@ export default function Map() {
   };
 
   const initializeClusters = () => {
-    let clusters = new Set<ClusterObject>();
+    if (propertyData) {
+      let clusters = new Set<ClusterObject>();
 
-    oxfordRealEstateData.listing.forEach((listing) => {
-      if (
-        [...clusters].filter((obj) => {
-          return obj.outcode === listing.outcode;
-        }).length > 0
-      ) {
-        const tmpArray = [...clusters].map((obj) => {
-          if (obj.outcode === listing.outcode) {
-            const tmpObj = Object.assign({}, obj);
+      propertyData.listing.forEach((listing) => {
+        if (
+          [...clusters].filter((obj) => {
+            return obj.outcode === listing.outcode;
+          }).length > 0
+        ) {
+          const tmpArray = [...clusters].map((obj) => {
+            if (obj.outcode === listing.outcode) {
+              const tmpObj = Object.assign({}, obj);
 
-            tmpObj.propertyAmount += 1;
-            tmpObj.averageCost =
-              (obj.averageCost * obj.propertyAmount +
-                listing.rental_prices.per_month) /
-              tmpObj.propertyAmount;
-            tmpObj.coordinates = {
-              lat:
-                (obj.coordinates.lat * obj.propertyAmount + listing.latitude) /
-                tmpObj.propertyAmount,
-              lng:
-                (obj.coordinates.lng * obj.propertyAmount + listing.longitude) /
-                tmpObj.propertyAmount,
-            };
-            tmpObj.listing_ids = [...obj.listing_ids, listing.listing_id];
+              tmpObj.propertyAmount += 1;
+              tmpObj.averageCost =
+                (obj.averageCost * obj.propertyAmount +
+                  listing.rental_prices.per_month) /
+                tmpObj.propertyAmount;
+              tmpObj.coordinates = {
+                lat:
+                  (obj.coordinates.lat * obj.propertyAmount +
+                    listing.latitude) /
+                  tmpObj.propertyAmount,
+                lng:
+                  (obj.coordinates.lng * obj.propertyAmount +
+                    listing.longitude) /
+                  tmpObj.propertyAmount,
+              };
+              tmpObj.listing_ids = [...obj.listing_ids, listing.listing_id];
 
-            return tmpObj;
-          }
+              return tmpObj;
+            }
 
-          return obj;
-        });
+            return obj;
+          });
 
-        const tmpSet = new Set(tmpArray);
+          const tmpSet = new Set(tmpArray);
 
-        clusters = tmpSet;
-      } else {
-        clusters.add({
-          outcode: listing.outcode,
-          propertyAmount: 1,
-          averageCost: listing.rental_prices.per_month,
-          coordinates: { lat: listing.latitude, lng: listing.longitude },
-          listing_ids: [listing.listing_id],
-        });
-      }
-    });
+          clusters = tmpSet;
+        } else {
+          clusters.add({
+            outcode: listing.outcode,
+            propertyAmount: 1,
+            averageCost: listing.rental_prices.per_month,
+            coordinates: { lat: listing.latitude, lng: listing.longitude },
+            listing_ids: [listing.listing_id],
+          });
+        }
+      });
 
-    setObjectsToDisplay([...clusters]);
+      setObjectsToDisplay([...clusters]);
+    }
   };
 
   useEffect(() => {
@@ -203,78 +227,92 @@ export default function Map() {
 
   useEffect(() => {
     initializeClusters();
-  }, []);
+  }, [rerender]);
 
-  return (
-    <div style={{ height: '90vh', width: 'auto' }}>
-      <GoogleMapReact
-        bootstrapURLKeys={{ key: 'AIzaSyBTg924Z_lgqKWI3ZulRU6YgRUEDdmeclQ' }}
-        defaultCenter={{
-          lat: townCoordinates.lat,
-          lng: townCoordinates.lng,
-        }}
-        defaultZoom={17}
-        yesIWantToUseGoogleMapApiInternals
-        onGoogleApiLoaded={({ map }) => {
-          mapRef.current = map;
-        }}
-        onChange={({ zoom, bounds }) => {
-          setMapZoom(zoom);
-          setMapBounds({
-            nwLng: bounds.nw.lng,
-            seLat: bounds.se.lat,
-            seLng: bounds.se.lng,
-            nwLat: bounds.nw.lat,
-          });
-        }}
-        onTilesLoaded={() => {
-          if (!mapHasLoaded) {
-            markerBounds = mapRef.current.getBounds();
-            extendBounds(oxfordRealEstateData);
-            mapRef.current.fitBounds(markerBounds);
-            setMapHasLoaded(true);
-          }
-        }}
-      >
-        {objectsToDisplay?.map((mapObject) => {
-          if ('listing_id' in mapObject) {
+  console.log(rerender, objectsToDisplay, propertyData);
+
+  if (propertyData && townCoordinates) {
+    return (
+      <div style={{ height: '90vh', width: 'auto' }}>
+        <GoogleMapReact
+          bootstrapURLKeys={{ key: 'AIzaSyBTg924Z_lgqKWI3ZulRU6YgRUEDdmeclQ' }}
+          defaultCenter={{
+            lat: townCoordinates.lat,
+            lng: townCoordinates.lng,
+          }}
+          defaultZoom={17}
+          yesIWantToUseGoogleMapApiInternals
+          onGoogleApiLoaded={({ map }) => {
+            mapRef.current = map;
+          }}
+          onChange={({ zoom, bounds }) => {
+            setMapZoom(zoom);
+            setMapBounds({
+              nwLng: bounds.nw.lng,
+              seLat: bounds.se.lat,
+              seLng: bounds.se.lng,
+              nwLat: bounds.nw.lat,
+            });
+          }}
+          onTilesLoaded={() => {
+            if (!mapHasLoaded) {
+              markerBounds = mapRef.current.getBounds();
+              extendBounds(propertyData!);
+              mapRef.current.fitBounds(markerBounds);
+              setMapHasLoaded(true);
+            }
+          }}
+        >
+          {objectsToDisplay?.map((mapObject) => {
+            if ('listing_id' in mapObject) {
+              return (
+                <Marker
+                  key={mapObject.listing_id}
+                  lat={mapObject.coordinates.lat}
+                  lng={mapObject.coordinates.lng}
+                >
+                  <button
+                    onClick={async () => {
+                      await router.push({
+                        pathname: `http://localhost:3000/details/${mapObject.listing_id}`,
+                      });
+                      sessionStorage.setItem(
+                        'listingData',
+                        JSON.stringify(propertyData),
+                      );
+                    }}
+                  >
+                    {mapObject.cost}
+                  </button>
+                </Marker>
+              );
+            }
+
             return (
               <Marker
-                key={mapObject.listing_id}
+                key={mapObject.outcode}
                 lat={mapObject.coordinates.lat}
                 lng={mapObject.coordinates.lng}
               >
                 <button
                   onClick={() => {
-                    window.location.href = `http://localhost:3000/details/${mapObject.listing_id}`;
+                    changeObjectsToDisplay(
+                      convertClusterToMarkers(mapObject) as MarkerObject[],
+                    );
+                    mapRef.current.setCenter(mapObject.coordinates);
+                    mapRef.current.setZoom(17);
+                    markerBounds = mapRef.current.getBounds();
                   }}
                 >
-                  {mapObject.cost}
+                  {mapObject.averageCost}
                 </button>
               </Marker>
             );
-          }
-
-          return (
-            <Marker
-              key={mapObject.outcode}
-              lat={mapObject.coordinates.lat}
-              lng={mapObject.coordinates.lng}
-            >
-              <button
-                onClick={() => {
-                  changeObjectsToDisplay(convertClusterToMarkers(mapObject));
-                  mapRef.current.setCenter(mapObject.coordinates);
-                  mapRef.current.setZoom(17);
-                  markerBounds = mapRef.current.getBounds();
-                }}
-              >
-                {mapObject.averageCost}
-              </button>
-            </Marker>
-          );
-        })}
-      </GoogleMapReact>
-    </div>
-  );
+          })}
+        </GoogleMapReact>
+      </div>
+    );
+  } else {
+    return <h1>LOADING</h1>;
+  }
 }

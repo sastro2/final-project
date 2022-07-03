@@ -14,8 +14,6 @@ export default function Home() {
   const [maxPrice, setMaxPrice] = useState<number>(0);
   // const [autocompleteResult, setAutocompleteResult] = useState<string[]>([]);
 
-  console.log(process.env.PGHOST);
-
   const bedroomsRef = useRef<HTMLSelectElement>(null);
   const maxPriceRef = useRef<HTMLSelectElement>(null);
 
@@ -92,7 +90,7 @@ export default function Home() {
           }}
         >
           <option value={500}>500€</option>
-          <option value={600}>600</option>
+          <option value={600}>600€</option>
           <option value={700}>700€</option>
           <option value={800}>800€</option>
           <option value={900}>900€</option>

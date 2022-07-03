@@ -3,8 +3,24 @@ import { serialize } from 'cookie';
 export function createSerializedRegisterTokenCookie(
   token: string,
   type: string,
+  options?: {
+    expired: boolean;
+  },
 ) {
   const isProduction = process.env.NODE_ENV === 'production';
+
+  if (options?.expired) {
+    const cookieType = type === 'access' ? 'aT' : 'rT';
+
+    return serialize(cookieType, token, {
+      expires: new Date(Date.now() - 1000),
+
+      httpOnly: true,
+      secure: isProduction,
+      path: '/',
+      sameSite: 'lax',
+    });
+  }
 
   if (type === 'access') {
     const maxAge = 30;

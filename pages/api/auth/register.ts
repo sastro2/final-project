@@ -5,8 +5,9 @@ import { verifyCsrfToken } from '../../../util/auth';
 import { createSerializedRegisterTokenCookie } from '../../../util/cookies';
 import {
   createAccessToken,
-  createProfile,
+  createProfileForUser,
   createRefreshToken,
+  createSettingsForUser,
   createUser,
   getUserByUsername,
 } from '../../../util/database';
@@ -78,8 +79,10 @@ export default async function registerHandler(
     }
 
     const passwordHash = await bcrypt.hash(request.body.password, 12);
-    const user = await createUser(request.body.username, passwordHash);
-    await createProfile('user', 2, user.id.toString());
+    const secret = crypto.randomBytes(64).toString('base64');
+    const user = await createUser(request.body.username, passwordHash, secret);
+    await createProfileForUser('user', 2, user.id.toString());
+    await createSettingsForUser(user.id);
 
     const token = crypto.randomBytes(64).toString('base64');
     const accessToken = await createAccessToken(token, user.id);

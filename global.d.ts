@@ -394,9 +394,11 @@ declare global {
   export type User = {
     id: number;
     username: string;
-    firstName: string;
-    lastName: string;
-    email: string;
+    twofaSecret?: string;
+    twofaUnixT0?: number;
+    firstName?: string;
+    lastName?: string;
+    email?: string;
   };
 
   export type UserWithPasswordHash = User & { passwordHash: string };
@@ -414,8 +416,36 @@ declare global {
     userId: number;
   };
 
+  export type RefreshToken = {
+    id: number;
+    token: string;
+    wasUsed: boolean;
+    userId: number;
+  };
+
   export type CsrfSalt = {
     id: number;
     salt: string;
   };
+
+  export type TwoFaData = {
+    twofaSecret: string;
+    twofaUnixT0: number;
+  };
+
+  export type TwoFaEnabled = {
+    userId: number;
+    has2Fa: boolean;
+    twofaTimeoutUntil: number;
+  };
+
+  export type Settings = {
+    userId: number;
+    has2Fa: boolean;
+    twofaTimeoutUntil: number;
+  };
+
+  export type TotpResponseBody =
+    | { errors: { message: string }[] }
+    | { passwordMatches: boolean };
 }
