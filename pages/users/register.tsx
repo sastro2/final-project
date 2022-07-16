@@ -1,4 +1,3 @@
-import { GetServerSidePropsContext } from 'next';
 import { generateCsrfToken } from '../../util/auth';
 
 export default function Register(props) {
@@ -15,12 +14,14 @@ export default function Register(props) {
         csrfSaltId: props.csrfToken.id,
       }),
     });
+
+    console.log(registerResponse);
   };
 
   return <button onClick={() => test()}>test</button>;
 }
 
-export async function getServerSideProps(context: GetServerSidePropsContext) {
+export async function getServerSideProps() {
   const token = await generateCsrfToken();
 
   return {

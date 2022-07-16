@@ -1,4 +1,3 @@
-import { School } from '@mui/icons-material';
 import BathtubIcon from '@mui/icons-material/Bathtub';
 import BedIcon from '@mui/icons-material/Bed';
 import FiberNewIcon from '@mui/icons-material/FiberNew';

@@ -33,7 +33,6 @@ import {
 } from '../util/database';
 import { applySearchParameters } from '../util/methods/pages/utils/searchParameters/applySearchParameters';
 import { setParameters } from '../util/methods/pages/utils/searchParameters/setParameters';
-import { oxfordRealEstateData } from '../util/tempData';
 
 type PropertyListProps = {
   loggedIn: boolean;
@@ -257,6 +256,8 @@ export default function PropertyList(props: PropertyListProps) {
         return null;
       });
   }, [deferredInput]);
+
+  console.log(autocomplete);
 
   if (props.reusedRefreshToken) {
     return <h1>Token reuse detected please relog</h1>;

@@ -175,7 +175,10 @@ export default function Map(props: MapProps) {
     }
 
     fetchData().catch(console.error);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage]);
+
+  console.log(mapBounds, mapZoom);
 
   useEffect(() => {
     if (checkIfMarkerObjects(objectsToDisplay)) {
@@ -189,13 +192,13 @@ export default function Map(props: MapProps) {
         mapRef.current.fitBounds(markerBounds);
       }
     }
-  }, [objectsToDisplay]);
+  }, [objectsToDisplay, mapHasLoaded]);
 
   useEffect(() => {
     console.log(propertyData, ' hi');
 
     initializeClusters(router, propertyData, setObjectsToDisplay);
-  }, [rerender]);
+  }, [rerender, router]);
 
   let townCoordinates;
 

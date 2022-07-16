@@ -75,7 +75,7 @@ export default function Home(props: HomeProps) {
       });
   }, [deferredInput]);
 
-  console.log(bedroomSetting, maxPrice);
+  console.log(autocomplete, props.user);
 
   if (props.reusedRefreshToken) {
     return <h1>Token reuse detected please relog</h1>;
