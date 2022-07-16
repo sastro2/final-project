@@ -24,12 +24,14 @@ import PropertyImageCarousel, {
   CarouselImage,
 } from '../Components/Property/Carousel';
 import AutocompleteInputBox from '../Components/util/AutocompleteInput';
+import LoadingScreen from '../Components/util/LoadingScreen';
 import { RefreshAccessResponseBody } from '../pages/api/auth/refreshAccess';
 import { generateCsrfToken } from '../util/auth';
 import {
   getSearchParamsForUserById,
   getUserIdByAccessToken,
   getUserIdByRefreshToken,
+  getUserWith2FaSecretById,
 } from '../util/database';
 import { applySearchParameters } from '../util/methods/pages/utils/searchParameters/applySearchParameters';
 import { setParameters } from '../util/methods/pages/utils/searchParameters/setParameters';
@@ -38,6 +40,7 @@ type PropertyListProps = {
   loggedIn: boolean;
   reusedRefreshToken?: boolean;
   userId?: number;
+  user?: User;
   rentSearchParams: string | null;
   buySearchParams: string | null;
 };
@@ -97,7 +100,7 @@ export default function PropertyList(props: PropertyListProps) {
             },
             headers: {
               'X-RapidAPI-Key':
-                'a74f961ba7msh62ea9a4969454c6p1dd9a4jsncd6b433b6c2e',
+                '87a3223e12mshecbd30f5c87c23bp1912e3jsn7ff93b3e0f99',
               'X-RapidAPI-Host': 'zoopla.p.rapidapi.com',
             },
           };
@@ -119,7 +122,7 @@ export default function PropertyList(props: PropertyListProps) {
             },
             headers: {
               'X-RapidAPI-Key':
-                'a74f961ba7msh62ea9a4969454c6p1dd9a4jsncd6b433b6c2e',
+                '87a3223e12mshecbd30f5c87c23bp1912e3jsn7ff93b3e0f99',
               'X-RapidAPI-Host': 'zoopla.p.rapidapi.com',
             },
           };
@@ -142,7 +145,7 @@ export default function PropertyList(props: PropertyListProps) {
           },
           headers: {
             'X-RapidAPI-Key':
-              'a74f961ba7msh62ea9a4969454c6p1dd9a4jsncd6b433b6c2e',
+              '87a3223e12mshecbd30f5c87c23bp1912e3jsn7ff93b3e0f99',
             'X-RapidAPI-Host': 'zoopla.p.rapidapi.com',
           },
         };
@@ -234,7 +237,7 @@ export default function PropertyList(props: PropertyListProps) {
       url: 'https://zoopla.p.rapidapi.com/auto-complete',
       params: { search_term: deferredInput },
       headers: {
-        'X-RapidAPI-Key': 'a74f961ba7msh62ea9a4969454c6p1dd9a4jsncd6b433b6c2e',
+        'X-RapidAPI-Key': '87a3223e12mshecbd30f5c87c23bp1912e3jsn7ff93b3e0f99',
         'X-RapidAPI-Host': 'zoopla.p.rapidapi.com',
       },
     };
@@ -264,7 +267,7 @@ export default function PropertyList(props: PropertyListProps) {
   }
 
   if (loading) {
-    return <h1>Loading</h1>;
+    return <LoadingScreen />;
   }
 
   if (objectsToDisplay) {
@@ -272,7 +275,7 @@ export default function PropertyList(props: PropertyListProps) {
 
     return (
       <>
-        <Header loggedIn={props.loggedIn} />
+        <Header loggedIn={props.loggedIn} user={props.user} />
         <div style={{ display: 'flex' }}>
           <div
             style={{
@@ -600,6 +603,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
     if (userId) {
       const params = await getSearchParamsForUserById(userId.userId, true);
+      const user = await getUserWith2FaSecretById(userId.userId);
       console.log('1', params);
 
       if (params && 'rentSearchParameters' in params) {
@@ -607,6 +611,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
           props: {
             loggedIn: true,
             userId: userId.userId,
+            user: user,
             rentSearchParams: params.rentSearchParameters
               ? params.rentSearchParameters
               : null,
@@ -618,6 +623,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
           props: {
             loggedIn: true,
             userId: userId.userId,
+            user: user,
             buySearchParams: params.buySearchParameters
               ? params.buySearchParameters
               : null,
@@ -673,6 +679,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
           cookies.set(refreshAccessResponseBody.cookies.aT);
 
           const params = await getSearchParamsForUserById(userId.userId, true);
+          const user = await getUserWith2FaSecretById(userId.userId);
           console.log('3', params);
 
           if (params && 'rentSearchParameters' in params) {
@@ -680,6 +687,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
               props: {
                 loggedIn: true,
                 userId: userId.userId,
+                user: user,
                 rentSearchParams: params.rentSearchParameters
                   ? params.rentSearchParameters
                   : null,
@@ -691,6 +699,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
               props: {
                 loggedIn: true,
                 userId: userId.userId,
+                user: user,
                 buySearchParams: params.buySearchParameters
                   ? params.buySearchParameters
                   : null,

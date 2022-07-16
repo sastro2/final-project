@@ -12,18 +12,22 @@ import Menu from '@mui/material/Menu';
 import Toolbar from '@mui/material/Toolbar';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
+import { useRouter } from 'next/router';
 import { MouseEvent, useState } from 'react';
 
 type HeaderProps = {
   loggedIn: boolean;
+  user: User | undefined;
 };
 
 const pages = ['For sale', 'To rent', 'News'];
-const loggedInProfileDropdown = ['Profile', 'Settings', 'Logout'];
+const loggedInProfileDropdown = ['Profile', 'Logout'];
 
 export default function Header(props: HeaderProps) {
   const [anchorElNav, setAnchorElNav] = useState<null | HTMLElement>(null);
   const [anchorElUser, setAnchorElUser] = useState<null | HTMLElement>(null);
+
+  const router = useRouter();
 
   const handleOpenNavMenu = (event: MouseEvent<HTMLElement>) => {
     setAnchorElNav(event.currentTarget);
@@ -36,8 +40,20 @@ export default function Header(props: HeaderProps) {
     setAnchorElNav(null);
   };
 
-  const handleCloseUserMenu = () => {
+  const handleCloseUserMenu = async (setting: string) => {
     setAnchorElUser(null);
+
+    switch (setting) {
+      case 'Profile':
+        if (props.user) {
+          await router.push(`/users/profile/${props.user.id.toString()}`);
+        }
+        break;
+      case 'Logout':
+        if (props.user) {
+          await router.push('/users/logout');
+        }
+    }
   };
 
   return (
@@ -158,15 +174,24 @@ export default function Header(props: HeaderProps) {
                   onClose={handleCloseUserMenu}
                 >
                   {loggedInProfileDropdown.map((setting) => (
-                    <MenuItem key={setting} onClick={handleCloseUserMenu}>
+                    <MenuItem
+                      key={setting}
+                      onClick={() => handleCloseUserMenu(setting)}
+                    >
                       <Typography textAlign="center">{setting}</Typography>
                     </MenuItem>
                   ))}
                 </Menu>
               </>
             ) : (
-              <IconButton size="large">
+              <IconButton
+                size="large"
+                onClick={async () => {
+                  await router.push('/users/login');
+                }}
+              >
                 <AccountCircleIcon fontSize="inherit" />
+                <Typography variant="subtitle2">SIGN IN</Typography>
               </IconButton>
             )}
           </Box>

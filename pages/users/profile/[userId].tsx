@@ -1,7 +1,17 @@
+import { Switch } from '@material-ui/core';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import KeyboardReturnIcon from '@mui/icons-material/KeyboardReturn';
+import SettingsIcon from '@mui/icons-material/Settings';
+import { Button, Typography } from '@mui/material';
+import Tab from '@mui/material/Tab';
+import Tabs from '@mui/material/Tabs';
 import Cookies from 'cookies';
 import { GetServerSidePropsContext } from 'next';
+import { useRouter } from 'next/router';
 import { QRCodeSVG } from 'qrcode.react';
-import { useState } from 'react';
+import { SyntheticEvent, useState } from 'react';
+import Header from '../../../Components/Layout/Header';
+import ProfileToggle2FaModal from '../../../Components/users/profile/ProfileToggle2FaModal';
 import { generateCsrfToken } from '../../../util/auth';
 import {
   getSettingsForUserById,
@@ -28,6 +38,21 @@ export default function UserDetail(props: UserProfileProps) {
   const [twoFaTurnedOn, setTwoFaTurnedOn] = useState<boolean>(
     props.settings ? props.settings.has2Fa : false,
   );
+  const [activeTab, setActiveTab] = useState<number>(0);
+  const [twoFaSwitchChecked, setTwoFaSwitchChecked] = useState<boolean>(
+    props.settings ? props.settings.has2Fa : false,
+  );
+  const [twoFaModalActive, setTwoFaModalActive] = useState<boolean>(false);
+
+  const router = useRouter();
+
+  if (router.query.activeTab) {
+    setActiveTab(parseInt(router.query.activeTab as string));
+  }
+
+  const handleTabChange = (event: SyntheticEvent, newValue: number) => {
+    setActiveTab(newValue);
+  };
 
   if (props.reusedRefreshToken) {
     return <h1>Token reuse detected please relog</h1>;
@@ -37,34 +62,82 @@ export default function UserDetail(props: UserProfileProps) {
     return <h1>Please log in or register</h1>;
   }
 
+  if (activeTab === 1) {
+    return (
+      <>
+        {twoFaModalActive && props.user?.twofaSecret && unixTime ? (
+          <ProfileToggle2FaModal
+            twoFaTurnedOn={twoFaTurnedOn}
+            qrCodeValue={`${props.user.twofaSecret},${unixTime}, ${props.user.username}`}
+          />
+        ) : null}
+        <Header loggedIn user={props.user} />
+        <div style={{ display: 'flex' }}>
+          <Button
+            onClick={() => {
+              router.back();
+            }}
+          >
+            <KeyboardReturnIcon fontSize="large" />
+          </Button>
+          <Tabs value={activeTab} onChange={handleTabChange}>
+            <Tab icon={<AccountCircleIcon />} label="Profile" />
+            <Tab icon={<SettingsIcon />} label="Settings" />
+          </Tabs>
+        </div>
+        {props.settings ? (
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <Typography variant="subtitle1">2FA</Typography>
+              <Switch
+                color="primary"
+                checked={twoFaSwitchChecked}
+                onChange={() => setTwoFaModalActive(true)}
+              />
+            </div>
+            {twoFaTurnedOn ? <h3>2FA turned on</h3> : <h3>2FA turned off</h3>}
+            <button
+              onClick={async () => [
+                await toggle2FaSetting(props, twoFaTurnedOn),
+                await handle2FaUnixT0(props, showQrCode, unixTime, setUnixTime),
+                setTwoFaTurnedOn(!twoFaTurnedOn),
+              ]}
+            >
+              Toggle 2FA
+            </button>
+          </div>
+        ) : null}
+        {twoFaTurnedOn ? (
+          <button onClick={() => setShowQrCode(!showQrCode)}>
+            {showQrCode ? 'Hide QR Code' : 'Show QR Code'}
+          </button>
+        ) : null}
+        {showQrCode && props.user?.twofaSecret && unixTime ? (
+          <QRCodeSVG
+            size={256}
+            value={`${props.user.twofaSecret},${unixTime}, ${props.user.username}`}
+          />
+        ) : null}
+      </>
+    );
+  }
+
   return (
     <>
-      <h1>Profile</h1>
-      {props.settings ? (
-        <div>
-          {twoFaTurnedOn ? <h3>2FA turned on</h3> : <h3>2FA turned off</h3>}
-          <button
-            onClick={async () => [
-              await toggle2FaSetting(props, twoFaTurnedOn),
-              await handle2FaUnixT0(props, showQrCode, unixTime, setUnixTime),
-              setTwoFaTurnedOn(!twoFaTurnedOn),
-            ]}
-          >
-            Toggle 2FA
-          </button>
-        </div>
-      ) : null}
-      {twoFaTurnedOn ? (
-        <button onClick={() => setShowQrCode(!showQrCode)}>
-          {showQrCode ? 'Hide QR Code' : 'Show QR Code'}
-        </button>
-      ) : null}
-      {showQrCode && props.user?.twofaSecret && unixTime ? (
-        <QRCodeSVG
-          size={256}
-          value={`${props.user.twofaSecret},${unixTime}, ${props.user.username}`}
-        />
-      ) : null}
+      <Header loggedIn user={props.user} />
+      <div style={{ display: 'flex' }}>
+        <Button
+          onClick={() => {
+            router.back();
+          }}
+        >
+          <KeyboardReturnIcon fontSize="large" />
+        </Button>
+        <Tabs value={activeTab} onChange={handleTabChange}>
+          <Tab icon={<AccountCircleIcon />} label="Profile" />
+          <Tab icon={<SettingsIcon />} label="Settings" />
+        </Tabs>
+      </div>
     </>
   );
 }

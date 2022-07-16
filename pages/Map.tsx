@@ -14,12 +14,14 @@ import { useRouter } from 'next/router';
 import { useEffect, useRef, useState } from 'react';
 import Header from '../Components/Layout/Header';
 import PropertyImageCarousel from '../Components/Property/Carousel';
+import LoadingScreen from '../Components/util/LoadingScreen';
 import { RefreshAccessResponseBody } from '../pages/api/auth/refreshAccess';
 import { generateCsrfToken } from '../util/auth';
 import {
   getSearchParamsForUserById,
   getUserIdByAccessToken,
   getUserIdByRefreshToken,
+  getUserWith2FaSecretById,
 } from '../util/database';
 import {
   changeObjectsToDisplay,
@@ -55,6 +57,7 @@ export type MapProps = {
   loggedIn: boolean;
   reusedRefreshToken?: boolean;
   userId?: number;
+  user?: User;
   rentSearchParams: string | null;
   buySearchParams: string | null;
 };
@@ -109,7 +112,7 @@ export default function Map(props: MapProps) {
             },
             headers: {
               'X-RapidAPI-Key':
-                'a74f961ba7msh62ea9a4969454c6p1dd9a4jsncd6b433b6c2e',
+                '87a3223e12mshecbd30f5c87c23bp1912e3jsn7ff93b3e0f99',
               'X-RapidAPI-Host': 'zoopla.p.rapidapi.com',
             },
           };
@@ -131,7 +134,7 @@ export default function Map(props: MapProps) {
             },
             headers: {
               'X-RapidAPI-Key':
-                'a74f961ba7msh62ea9a4969454c6p1dd9a4jsncd6b433b6c2e',
+                '87a3223e12mshecbd30f5c87c23bp1912e3jsn7ff93b3e0f99',
               'X-RapidAPI-Host': 'zoopla.p.rapidapi.com',
             },
           };
@@ -152,7 +155,7 @@ export default function Map(props: MapProps) {
           },
           headers: {
             'X-RapidAPI-Key':
-              'a74f961ba7msh62ea9a4969454c6p1dd9a4jsncd6b433b6c2e',
+              '87a3223e12mshecbd30f5c87c23bp1912e3jsn7ff93b3e0f99',
             'X-RapidAPI-Host': 'zoopla.p.rapidapi.com',
           },
         };
@@ -216,7 +219,7 @@ export default function Map(props: MapProps) {
   if (propertyData && townCoordinates && objectsToDisplay && !isLoading) {
     return (
       <>
-        <Header loggedIn={props.loggedIn} />
+        <Header loggedIn={props.loggedIn} user={props.user} />
         <div
           style={{
             display: 'flex',
@@ -551,7 +554,7 @@ export default function Map(props: MapProps) {
       </>
     );
   } else {
-    return <h1>LOADING</h1>;
+    return <LoadingScreen />;
   }
 }
 
@@ -563,6 +566,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     const userId = await getUserIdByAccessToken(accessToken);
 
     if (userId) {
+      const user = await getUserWith2FaSecretById(userId.userId);
       const params = await getSearchParamsForUserById(userId.userId, true);
       console.log('1', params);
 
@@ -571,6 +575,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
           props: {
             loggedIn: true,
             userId: userId.userId,
+            user: user,
             rentSearchParams: params.rentSearchParameters
               ? params.rentSearchParameters
               : null,
@@ -582,6 +587,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
           props: {
             loggedIn: true,
             userId: userId.userId,
+            user: user,
             buySearchParams: params.buySearchParameters
               ? params.buySearchParameters
               : null,
@@ -637,6 +643,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
           cookies.set(refreshAccessResponseBody.cookies.aT);
 
           const params = await getSearchParamsForUserById(userId.userId, true);
+          const user = await getUserWith2FaSecretById(userId.userId);
           console.log('3', params);
 
           if (params && 'rentSearchParameters' in params) {
@@ -644,6 +651,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
               props: {
                 loggedIn: true,
                 userId: userId.userId,
+                user: user,
                 rentSearchParams: params.rentSearchParameters
                   ? params.rentSearchParameters
                   : null,
@@ -655,6 +663,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
               props: {
                 loggedIn: true,
                 userId: userId.userId,
+                user: user,
                 buySearchParams: params.buySearchParameters
                   ? params.buySearchParameters
                   : null,

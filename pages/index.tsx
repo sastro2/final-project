@@ -46,13 +46,15 @@ export default function Home(props: HomeProps) {
 
   const deferredInput: string = useDeferredValue(searchInput);
 
+  console.log(deferredInput);
+
   const autocomplete = useMemo(() => {
     const options = {
       method: 'GET',
       url: 'https://zoopla.p.rapidapi.com/auto-complete',
       params: { search_term: deferredInput },
       headers: {
-        'X-RapidAPI-Key': 'a74f961ba7msh62ea9a4969454c6p1dd9a4jsncd6b433b6c2e',
+        'X-RapidAPI-Key': '87a3223e12mshecbd30f5c87c23bp1912e3jsn7ff93b3e0f99',
         'X-RapidAPI-Host': 'zoopla.p.rapidapi.com',
       },
     };
@@ -64,25 +66,31 @@ export default function Home(props: HomeProps) {
       .then(function (response) {
         data = response.data as AutocompleteObject | undefined;
 
-        if (data) {
+        console.log(data, deferredInput);
+
+        if (data && deferredInput) {
           setAutocompleteResult(data.suggestions);
+        } else {
+          setAutocompleteResult([]);
         }
+
         return data;
       })
       .catch(function (error) {
-        console.error(error);
+        setAutocompleteResult([]);
+        console.log(error);
         return null;
       });
   }, [deferredInput]);
 
-  console.log(autocomplete, props.user);
+  console.log(autocompleteResult);
 
   if (props.reusedRefreshToken) {
     return <h1>Token reuse detected please relog</h1>;
   }
   return (
     <>
-      <Header loggedIn={props.loggedIn} />
+      <Header loggedIn={props.loggedIn} user={props.user} />
       <div
         style={{
           padding: '16%',

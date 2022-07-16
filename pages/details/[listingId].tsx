@@ -1,13 +1,15 @@
 import BathtubIcon from '@mui/icons-material/Bathtub';
 import BedIcon from '@mui/icons-material/Bed';
+import EmailIcon from '@mui/icons-material/Email';
 import FiberNewIcon from '@mui/icons-material/FiberNew';
 import KeyboardReturnIcon from '@mui/icons-material/KeyboardReturn';
 import LocalAirportIcon from '@mui/icons-material/LocalAirport';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
+import PhoneIcon from '@mui/icons-material/Phone';
 import RoomIcon from '@mui/icons-material/Room';
 import SchoolIcon from '@mui/icons-material/School';
 import TrainIcon from '@mui/icons-material/Train';
-import { Button, Chip, Grid, Typography } from '@mui/material';
+import { Button, Card, Chip, Grid, Typography } from '@mui/material';
 import GoogleMapReact from 'google-map-react';
 import { GetServerSidePropsContext } from 'next';
 import { useRouter } from 'next/router';
@@ -350,7 +352,51 @@ export default function Listing(props: ListingProps) {
           </Grid>
         </section>
         <section>
-          <div style={{ width: '35vw', height: '100%' }} />
+          <div
+            style={{
+              width: '35vw',
+              height: '100%',
+            }}
+          >
+            <Card style={{ position: 'sticky', top: '2%', marginLeft: '2%' }}>
+              <Grid container>
+                <Grid
+                  item
+                  xs={12}
+                  display="flex"
+                  justifyContent="center"
+                  alignItems="center"
+                  gap={2}
+                >
+                  <Typography variant="h5">
+                    {foundListing.agent_name}
+                  </Typography>
+                  <img
+                    src={foundListing.agent_logo}
+                    width="100%"
+                    alt="agent logo"
+                    style={{ maxWidth: '100px' }}
+                  />
+                </Grid>
+                <Grid
+                  item
+                  xs={12}
+                  display="flex"
+                  justifyContent="center"
+                  alignItems="center"
+                  gap={2}
+                >
+                  <PhoneIcon />
+                  {foundListing.agent_phone}
+                </Grid>
+                <Grid item xs={12} display="flex" justifyContent="center">
+                  <Button>
+                    <EmailIcon /> Email agent
+                  </Button>
+                </Grid>
+              </Grid>
+            </Card>
+          </div>
         </section>
       </main>
     );

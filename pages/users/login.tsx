@@ -1,15 +1,19 @@
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import Avatar from '@mui/material/Avatar';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Container from '@mui/material/Container';
+import CssBaseline from '@mui/material/CssBaseline';
+import Grid from '@mui/material/Grid';
+import Link from '@mui/material/Link';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
 import { GetServerSidePropsContext } from 'next';
 import { useRouter } from 'next/router';
-import {
-  ChangeEvent,
-  Dispatch,
-  FormEvent,
-  KeyboardEvent,
-  MutableRefObject,
-  SetStateAction,
-  useRef,
-  useState,
-} from 'react';
+import * as React from 'react';
+import { FormEvent, useState } from 'react';
+import LoginTwoFaPopupModal from '../../Components/users/login/LoginTwoFaPopupModal';
 import { generateCsrfToken } from '../../util/auth';
 import { getUserIdByRefreshToken } from '../../util/database';
 import { LoginResponseBody } from '../api/auth/login';
@@ -22,6 +26,26 @@ let twoFaUserID: number;
 let twoFaUsername: string;
 let twoFaPassword: string;
 
+function Copyright(props: any) {
+  return (
+    <Typography
+      variant="body2"
+      color="text.secondary"
+      align="center"
+      {...props}
+    >
+      {'Copyright © '}
+      <Link color="inherit" href="https://mui.com/">
+        Your Website
+      </Link>{' '}
+      {new Date().getFullYear()}
+      {'.'}
+    </Typography>
+  );
+}
+
+const theme = createTheme();
+
 export default function Login(props: LoginProps) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -33,77 +57,12 @@ export default function Login(props: LoginProps) {
   const [fifth2FaNumber, setFifth2FaNumber] = useState<number>();
   const [sixth2FaNumber, setSixth2FaNumber] = useState<number>();
 
-  const first2FaInputRef = useRef<HTMLInputElement | null>(null);
-  const second2FaInputRef = useRef<HTMLInputElement | null>(null);
-  const third2FaInputRef = useRef<HTMLInputElement | null>(null);
-  const fourth2FaInputRef = useRef<HTMLInputElement | null>(null);
-  const fifth2FaInputRef = useRef<HTMLInputElement | null>(null);
-  const sixth2FaInputRef = useRef<HTMLInputElement | null>(null);
+  const usernameInputRef = React.useRef<HTMLInputElement>(null);
+  const passwordInputRef = React.useRef<HTMLInputElement>(null);
 
   const router = useRouter();
 
   console.log(twoFaWindowActive);
-
-  const change2FaNumbers = (
-    event: KeyboardEvent<HTMLInputElement>,
-    stateFunction: Dispatch<SetStateAction<number | undefined>>,
-    ref: MutableRefObject<HTMLInputElement | null>,
-    prevRef?: MutableRefObject<HTMLInputElement | null>,
-  ) => {
-    if (
-      (event.key === '1' ||
-        event.key === '2' ||
-        event.key === '3' ||
-        event.key === '4' ||
-        event.key === '5' ||
-        event.key === '6' ||
-        event.key === '7' ||
-        event.key === '8' ||
-        event.key === '9' ||
-        event.key === '0' ||
-        event.key === 'Backspace') &&
-      ref.current
-    ) {
-      if (event.key === 'Backspace') {
-        stateFunction(undefined);
-        if (prevRef?.current) {
-          if (ref.current.value === '') {
-            prevRef.current.focus();
-            return;
-          }
-        }
-        ref.current.value = '';
-        return;
-      }
-
-      stateFunction(parseInt(event.key));
-      ref.current.value = '';
-
-      return;
-    }
-  };
-
-  const removeNonNumericValues = (
-    event: ChangeEvent<HTMLInputElement>,
-    ref: MutableRefObject<HTMLInputElement | null>,
-    nextRef?: MutableRefObject<HTMLInputElement | null>,
-  ) => {
-    if (ref.current) {
-      if (isNaN(parseInt(event.currentTarget.value))) {
-        ref.current.value = '';
-        return;
-      }
-      if (!isNaN(parseInt(event.currentTarget.value))) {
-        const slicedInput = event.currentTarget.value.slice(0, 1);
-
-        ref.current.value = slicedInput;
-        if (nextRef?.current) {
-          nextRef.current.focus();
-        }
-        return;
-      }
-    }
-  };
 
   const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -126,12 +85,24 @@ export default function Login(props: LoginProps) {
     if ('twoFaData' in loginResponseBody) {
       if (loginResponseBody.twoFaData.has2Fa) {
         setTwoFaWindowActive(true);
+        setUsername('');
+        setPassword('');
+
+        if (usernameInputRef.current && passwordInputRef.current) {
+          usernameInputRef.current.value = '';
+          passwordInputRef.current.value = '';
+        }
+
         twoFaUserID = loginResponseBody.twoFaData.userId;
         twoFaPassword = loginResponseBody.twoFaData.password;
         twoFaUsername = loginResponseBody.twoFaData.username;
 
         return;
       }
+    }
+
+    if ('errors' in loginResponseBody) {
+      return;
     }
 
     await router.push('/');
@@ -203,103 +174,86 @@ export default function Login(props: LoginProps) {
 
   return (
     <>
-      <form onSubmit={(event) => handleLogin(event)}>
-        <input onChange={(event) => setUsername(event.currentTarget.value)} />
-        <input
-          type="password"
-          onChange={(event) => setPassword(event.currentTarget.value)}
-        />
-        <button>submit</button>
-      </form>
+      <ThemeProvider theme={theme}>
+        <Container component="main" maxWidth="xs">
+          <CssBaseline />
+          <Box
+            sx={{
+              marginTop: 8,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+            }}
+          >
+            <Avatar sx={{ m: 1, bgcolor: 'secondary.main' }}>
+              <LockOutlinedIcon />
+            </Avatar>
+            <Typography component="h1" variant="h5">
+              Sign in
+            </Typography>
+            <Box
+              component="form"
+              onSubmit={(event: FormEvent<HTMLFormElement>) =>
+                handleLogin(event)
+              }
+              noValidate
+              sx={{ mt: 1 }}
+            >
+              <TextField
+                margin="normal"
+                inputRef={usernameInputRef}
+                required
+                fullWidth
+                id="username"
+                label="Username"
+                name="username"
+                autoComplete="username"
+                onChange={(event) => setUsername(event.currentTarget.value)}
+              />
+              <TextField
+                margin="normal"
+                inputRef={passwordInputRef}
+                required
+                fullWidth
+                name="password"
+                label="Password"
+                type="password"
+                id="password"
+                autoComplete="current-password"
+                onChange={(event) => setPassword(event.currentTarget.value)}
+              />
+              <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                sx={{ mt: 3, mb: 2 }}
+              >
+                Sign In
+              </Button>
+              <Grid container>
+                <Grid item>
+                  <Link href="/users/register" variant="body2">
+                    "Don't have an account? Sign Up"
+                  </Link>
+                </Grid>
+              </Grid>
+            </Box>
+          </Box>
+          <Copyright sx={{ mt: 8, mb: 4 }} />
+        </Container>
+      </ThemeProvider>
+
       {twoFaWindowActive ? (
-        <form onSubmit={(event) => authenticate(event)}>
-          <input
-            ref={first2FaInputRef}
-            onKeyDown={(event) =>
-              change2FaNumbers(event, setFirst2FaNumber, first2FaInputRef)
-            }
-            onChange={(event) =>
-              removeNonNumericValues(event, first2FaInputRef, second2FaInputRef)
-            }
-            required
-          />
-          <input
-            ref={second2FaInputRef}
-            onKeyDown={(event) =>
-              change2FaNumbers(
-                event,
-                setSecond2FaNumber,
-                second2FaInputRef,
-                first2FaInputRef,
-              )
-            }
-            onChange={(event) =>
-              removeNonNumericValues(event, second2FaInputRef, third2FaInputRef)
-            }
-            required
-          />
-          <input
-            ref={third2FaInputRef}
-            onKeyDown={(event) =>
-              change2FaNumbers(
-                event,
-                setThird2FaNumber,
-                third2FaInputRef,
-                second2FaInputRef,
-              )
-            }
-            onChange={(event) =>
-              removeNonNumericValues(event, third2FaInputRef, fourth2FaInputRef)
-            }
-            required
-          />
-          <input
-            ref={fourth2FaInputRef}
-            onKeyDown={(event) =>
-              change2FaNumbers(
-                event,
-                setFourth2FaNumber,
-                fourth2FaInputRef,
-                third2FaInputRef,
-              )
-            }
-            onChange={(event) =>
-              removeNonNumericValues(event, fourth2FaInputRef, fifth2FaInputRef)
-            }
-            required
-          />
-          <input
-            ref={fifth2FaInputRef}
-            onKeyDown={(event) =>
-              change2FaNumbers(
-                event,
-                setFifth2FaNumber,
-                fifth2FaInputRef,
-                fourth2FaInputRef,
-              )
-            }
-            onChange={(event) =>
-              removeNonNumericValues(event, fifth2FaInputRef, sixth2FaInputRef)
-            }
-            required
-          />
-          <input
-            ref={sixth2FaInputRef}
-            onKeyDown={(event) =>
-              change2FaNumbers(
-                event,
-                setSixth2FaNumber,
-                sixth2FaInputRef,
-                fifth2FaInputRef,
-              )
-            }
-            onChange={(event) =>
-              removeNonNumericValues(event, sixth2FaInputRef)
-            }
-            required
-          />
-          <button>submit</button>
-        </form>
+        <LoginTwoFaPopupModal
+          setFirst2FaNumber={setFirst2FaNumber}
+          setSecond2FaNumber={setSecond2FaNumber}
+          setThird2FaNumber={setThird2FaNumber}
+          setFourth2FaNumber={setFourth2FaNumber}
+          setFifth2FaNumber={setFifth2FaNumber}
+          setSixth2FaNumber={setSixth2FaNumber}
+          setTwoFaWindowActive={setTwoFaWindowActive}
+          authenticate={authenticate}
+        />
       ) : null}
     </>
   );

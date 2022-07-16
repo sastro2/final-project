@@ -31,16 +31,23 @@ export default function AutocompleteInputBox(props: AutocompleteInputBoxProps) {
       isOptionEqualToValue={(option, value) => option.value === value.value}
       filterSelectedOptions
       value={props.value}
+      onKeyDown={() => {
+        console.log('OnKeyDown');
+        props.setOptions([]);
+      }}
       onChange={(
         event: SyntheticEvent,
         newValue: AutocompleteSuggestion | null,
       ) => {
+        console.log('OnChange');
         props.setOptions(
           newValue ? [newValue, ...props.options] : props.options,
         );
         props.setValue(newValue);
       }}
       onInputChange={(event: SyntheticEvent, newInputValue) => {
+        console.log('OnInputChange');
+
         props.setInputValue(newInputValue);
       }}
       renderInput={(params) => (
