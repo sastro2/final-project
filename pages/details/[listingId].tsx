@@ -83,7 +83,7 @@ export default function Listing(props: ListingProps) {
 
   const router = useRouter();
 
-  let images: CarouselImage[];
+  let images: CarouselImage[] = [];
 
   if (foundListing) {
     images = foundListing.other_image.map((image) => {

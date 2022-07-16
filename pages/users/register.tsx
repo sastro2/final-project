@@ -1,6 +1,6 @@
 import { generateCsrfToken } from '../../util/auth';
 
-export default function Register(props) {
+export default function Register(props: any) {
   const test = async () => {
     const registerResponse = await fetch('/api/auth/register', {
       method: 'POST',
