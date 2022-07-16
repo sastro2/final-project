@@ -1,9 +1,6 @@
-import PropertyImageCarousel from '../Components/Property/Carousel';
-
 export default function Test() {
   return (
     <>
-      <PropertyImageCarousel />
       <button
         onClick={async () => {
           const response = await fetch('http://localhost:4000/', {
