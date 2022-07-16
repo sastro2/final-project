@@ -1,3 +1,5 @@
+import { GetServerSidePropsContext } from 'next';
+import { useRouter } from 'next/router';
 import {
   ChangeEvent,
   Dispatch,
@@ -9,6 +11,7 @@ import {
   useState,
 } from 'react';
 import { generateCsrfToken } from '../../util/auth';
+import { getUserIdByRefreshToken } from '../../util/database';
 import { LoginResponseBody } from '../api/auth/login';
 
 type LoginProps = {
@@ -37,12 +40,15 @@ export default function Login(props: LoginProps) {
   const fifth2FaInputRef = useRef<HTMLInputElement | null>(null);
   const sixth2FaInputRef = useRef<HTMLInputElement | null>(null);
 
+  const router = useRouter();
+
   console.log(twoFaWindowActive);
 
   const change2FaNumbers = (
     event: KeyboardEvent<HTMLInputElement>,
     stateFunction: Dispatch<SetStateAction<number | undefined>>,
     ref: MutableRefObject<HTMLInputElement | null>,
+    prevRef?: MutableRefObject<HTMLInputElement | null>,
   ) => {
     if (
       (event.key === '1' ||
@@ -60,8 +66,13 @@ export default function Login(props: LoginProps) {
     ) {
       if (event.key === 'Backspace') {
         stateFunction(undefined);
+        if (prevRef?.current) {
+          if (ref.current.value === '') {
+            prevRef.current.focus();
+            return;
+          }
+        }
         ref.current.value = '';
-
         return;
       }
 
@@ -75,6 +86,7 @@ export default function Login(props: LoginProps) {
   const removeNonNumericValues = (
     event: ChangeEvent<HTMLInputElement>,
     ref: MutableRefObject<HTMLInputElement | null>,
+    nextRef?: MutableRefObject<HTMLInputElement | null>,
   ) => {
     if (ref.current) {
       if (isNaN(parseInt(event.currentTarget.value))) {
@@ -85,12 +97,15 @@ export default function Login(props: LoginProps) {
         const slicedInput = event.currentTarget.value.slice(0, 1);
 
         ref.current.value = slicedInput;
+        if (nextRef?.current) {
+          nextRef.current.focus();
+        }
         return;
       }
     }
   };
 
-  const login = async (event: FormEvent<HTMLFormElement>) => {
+  const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const loginResponse = await fetch('/api/auth/login', {
@@ -114,8 +129,12 @@ export default function Login(props: LoginProps) {
         twoFaUserID = loginResponseBody.twoFaData.userId;
         twoFaPassword = loginResponseBody.twoFaData.password;
         twoFaUsername = loginResponseBody.twoFaData.username;
+
+        return;
       }
     }
+
+    await router.push('/');
   };
 
   const authenticate = async (event: FormEvent<HTMLFormElement>) => {
@@ -164,12 +183,16 @@ export default function Login(props: LoginProps) {
         },
       );
 
-      const twoFaResponseBody =
-        (await twoFaResponse.json()) as TotpResponseBody;
+      const twoFaResponseBody = (await twoFaResponse.json()) as Omit<
+        TotpResponseBody,
+        'password'
+      > & {
+        passwordMatches: boolean;
+      };
 
       if ('passwordMatches' in twoFaResponseBody) {
         if (twoFaResponseBody.passwordMatches) {
-          console.log('worked');
+          await router.push('/');
         }
         if (!twoFaResponseBody.passwordMatches) {
           console.log('worked2');
@@ -180,9 +203,12 @@ export default function Login(props: LoginProps) {
 
   return (
     <>
-      <form onSubmit={(event) => login(event)}>
+      <form onSubmit={(event) => handleLogin(event)}>
         <input onChange={(event) => setUsername(event.currentTarget.value)} />
-        <input onChange={(event) => setPassword(event.currentTarget.value)} />
+        <input
+          type="password"
+          onChange={(event) => setPassword(event.currentTarget.value)}
+        />
         <button>submit</button>
       </form>
       {twoFaWindowActive ? (
@@ -193,54 +219,79 @@ export default function Login(props: LoginProps) {
               change2FaNumbers(event, setFirst2FaNumber, first2FaInputRef)
             }
             onChange={(event) =>
-              removeNonNumericValues(event, first2FaInputRef)
+              removeNonNumericValues(event, first2FaInputRef, second2FaInputRef)
             }
             required
           />
           <input
             ref={second2FaInputRef}
             onKeyDown={(event) =>
-              change2FaNumbers(event, setSecond2FaNumber, second2FaInputRef)
+              change2FaNumbers(
+                event,
+                setSecond2FaNumber,
+                second2FaInputRef,
+                first2FaInputRef,
+              )
             }
             onChange={(event) =>
-              removeNonNumericValues(event, second2FaInputRef)
+              removeNonNumericValues(event, second2FaInputRef, third2FaInputRef)
             }
             required
           />
           <input
             ref={third2FaInputRef}
             onKeyDown={(event) =>
-              change2FaNumbers(event, setThird2FaNumber, third2FaInputRef)
+              change2FaNumbers(
+                event,
+                setThird2FaNumber,
+                third2FaInputRef,
+                second2FaInputRef,
+              )
             }
             onChange={(event) =>
-              removeNonNumericValues(event, third2FaInputRef)
+              removeNonNumericValues(event, third2FaInputRef, fourth2FaInputRef)
             }
             required
           />
           <input
             ref={fourth2FaInputRef}
             onKeyDown={(event) =>
-              change2FaNumbers(event, setFourth2FaNumber, fourth2FaInputRef)
+              change2FaNumbers(
+                event,
+                setFourth2FaNumber,
+                fourth2FaInputRef,
+                third2FaInputRef,
+              )
             }
             onChange={(event) =>
-              removeNonNumericValues(event, fourth2FaInputRef)
+              removeNonNumericValues(event, fourth2FaInputRef, fifth2FaInputRef)
             }
             required
           />
           <input
             ref={fifth2FaInputRef}
             onKeyDown={(event) =>
-              change2FaNumbers(event, setFifth2FaNumber, fifth2FaInputRef)
+              change2FaNumbers(
+                event,
+                setFifth2FaNumber,
+                fifth2FaInputRef,
+                fourth2FaInputRef,
+              )
             }
             onChange={(event) =>
-              removeNonNumericValues(event, fifth2FaInputRef)
+              removeNonNumericValues(event, fifth2FaInputRef, sixth2FaInputRef)
             }
             required
           />
           <input
             ref={sixth2FaInputRef}
             onKeyDown={(event) =>
-              change2FaNumbers(event, setSixth2FaNumber, sixth2FaInputRef)
+              change2FaNumbers(
+                event,
+                setSixth2FaNumber,
+                sixth2FaInputRef,
+                fifth2FaInputRef,
+              )
             }
             onChange={(event) =>
               removeNonNumericValues(event, sixth2FaInputRef)
@@ -254,7 +305,22 @@ export default function Login(props: LoginProps) {
   );
 }
 
-export async function getServerSideProps() {
+export async function getServerSideProps(context: GetServerSidePropsContext) {
+  const rT = context.req.cookies.rT;
+  let rtMatches;
+  if (rT) {
+    rtMatches = await getUserIdByRefreshToken(rT);
+  }
+
+  if (rtMatches) {
+    return {
+      redirect: {
+        destination: '/',
+        permanent: false,
+      },
+    };
+  }
+
   const token = await generateCsrfToken();
 
   return {

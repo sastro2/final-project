@@ -65,6 +65,7 @@ declare global {
           image_80_60_url: string;
           property_number: string;
           status: string;
+          virtual_tour?: string[];
           agent_name: string;
           num_recepts: number;
           property_badge: string;
@@ -72,6 +73,7 @@ declare global {
           council_tax_band: string;
           company_id: number;
           first_published_date: string;
+          floor_plan?: string[];
           displayable_address: string;
           street_name: string;
           num_bathrooms: number;
@@ -156,6 +158,7 @@ declare global {
           image_80_60_url: string;
           property_number: string;
           status: string;
+          virtual_tour?: string[];
           agent_name: string;
           num_recepts: number;
           administration_fees: string;
@@ -164,6 +167,7 @@ declare global {
           company_id: number;
           property_id: number;
           first_published_date: string;
+          floor_plan?: string[];
           displayable_address: string;
           street_name: string;
           num_bathrooms: number;
@@ -258,6 +262,7 @@ declare global {
         image_80_60_url: string;
         property_number: string;
         status: string;
+        virtual_tour?: string[];
         agent_name: string;
         num_recepts: number;
         property_badge: string;
@@ -265,6 +270,7 @@ declare global {
         council_tax_band: string;
         company_id: number;
         first_published_date: string;
+        floor_plan?: string[];
         displayable_address: string;
         street_name: string;
         num_bathrooms: number;
@@ -349,6 +355,7 @@ declare global {
         image_80_60_url: string;
         property_number: string;
         status: string;
+        virtual_tour?: string[];
         agent_name: string;
         num_recepts: number;
         administration_fees: string;
@@ -357,6 +364,7 @@ declare global {
         company_id: number;
         property_id: number;
         first_published_date: string;
+        floor_plan?: string[];
         displayable_address: string;
         street_name: string;
         num_bathrooms: number;
@@ -389,6 +397,11 @@ declare global {
     county: string;
     town: string;
     postcode: string;
+  };
+
+  type AutocompleteSuggestion = {
+    identifier: string;
+    value: string;
   };
 
   export type User = {
@@ -447,5 +460,25 @@ declare global {
 
   export type TotpResponseBody =
     | { errors: { message: string }[] }
-    | { passwordMatches: boolean };
+    | { password: number[] | number };
+
+  export type SearchParameters =
+    | {
+        averageRent: number;
+        averageRooms: number;
+      }
+    | {
+        averageSalePrice: number;
+        averageRooms: number;
+      };
+
+  export type RentParameters = {
+    averageRent: number;
+    averageRooms: number;
+  };
+
+  export type SaleParameters = {
+    averageSalePrice: number;
+    averageRooms: number;
+  };
 }

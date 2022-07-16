@@ -9,8 +9,8 @@ export default function Register(props) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        username: 'abc',
-        password: 'abc',
+        username: 'testUser',
+        password: 'testUser',
         csrfToken: props.csrfToken.token,
         csrfSaltId: props.csrfToken.id,
       }),

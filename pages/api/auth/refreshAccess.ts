@@ -6,6 +6,7 @@ import {
   createAccessToken,
   createRefreshToken,
   getRefreshToken,
+  killAllRefreshTokensForUserById,
   setRefreshTokenToUsed,
 } from '../../../util/database';
 
@@ -22,11 +23,11 @@ type RefreshAccessNextApiRequest = Omit<NextApiRequest, 'body'> & {
 
 export type RefreshAccessResponseBody =
   | { errors: { message: string }[] }
-  | { reusedRefreshToken: boolean }
   | {
       cookies: {
         aT: string;
         rT: string;
+        reusedRefreshToken: boolean;
       };
     };
 
@@ -53,6 +54,8 @@ export default async function refreshAccessHandler(
 
     const token = await getRefreshToken(request.body.refreshToken);
 
+    console.log(token, request.body.userId);
+
     if (!token || token.userId !== request.body.userId) {
       response.status(403).json({
         errors: [
@@ -65,14 +68,19 @@ export default async function refreshAccessHandler(
     }
 
     if (token.wasUsed) {
+      await killAllRefreshTokensForUserById(request.body.userId);
       const serializedCookie = createSerializedRegisterTokenCookie(
         crypto.randomBytes(64).toString('base64'),
         'refresh',
         { expired: true },
       );
 
-      response.status(401).setHeader('Set-Cookie', serializedCookie!).json({
-        reusedRefreshToken: true,
+      response.status(401).json({
+        cookies: {
+          aT: '',
+          rT: serializedCookie!,
+          reusedRefreshToken: true,
+        },
       });
       return;
     }
@@ -101,6 +109,7 @@ export default async function refreshAccessHandler(
         cookies: {
           aT,
           rT,
+          reusedRefreshToken: false,
         },
       });
       return;

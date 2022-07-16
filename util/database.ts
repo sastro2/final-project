@@ -123,6 +123,71 @@ export async function createSettingsForUser(userId: number) {
   return camelcaseKeys(settings);
 }
 
+export async function getSettingsForUserById(id: number) {
+  const [settings] = await sql<[Settings]>`
+    SELECT
+      *
+    FROM
+      userSettings
+    WHERE
+      user_id =${id}
+  `;
+
+  return camelcaseKeys(settings);
+}
+
+export async function getSearchParamsForUserById(id: number, toRent: boolean) {
+  if (!toRent) {
+    const [params] = await sql<[{ rentSearchParameters: string } | undefined]>`
+    SELECT
+      buy_search_parameters
+    FROM
+      users
+    WHERE
+      id = ${id}
+  `;
+
+    return params && camelcaseKeys(params);
+  }
+
+  const [params] = await sql<[{ buySearchParameters: string } | undefined]>`
+    SELECT
+      rent_search_parameters
+    FROM
+      users
+    WHERE
+      id = ${id}
+  `;
+
+  return params && camelcaseKeys(params);
+}
+
+export async function setSearchParamsForUserById(
+  id: number,
+  searchParams: string,
+  toRent: boolean,
+) {
+  if (!toRent) {
+    await sql`
+      UPDATE
+        users
+      SET
+        buy_search_parameters = ${searchParams}
+      WHERE
+        id = ${id}
+    `;
+  }
+
+  await sql`
+      UPDATE
+        users
+      SET
+        rent_search_parameters = ${searchParams}
+      WHERE
+        id = ${id}
+    `;
+}
+
 export async function createAccessToken(token: string, userId: number) {
   const [accessToken] = await sql<[AccessToken]>`
     INSERT INTO accessTokens
@@ -153,6 +218,21 @@ export async function createRefreshToken(token: string, userId: number) {
   await deleteExpiredAccessTokens();
 
   return camelcaseKeys(refreshToken);
+}
+
+export async function getUserIdByAccessToken(token: string) {
+  await deleteExpiredAccessTokens();
+
+  const [id] = await sql<[{ userId: number } | undefined]>`
+    SELECT
+      user_id
+    FROM
+      accessTokens
+    WHERE
+      token = ${token}
+  `;
+
+  return id && camelcaseKeys(id);
 }
 
 export async function getRefreshToken(token: string) {
@@ -192,6 +272,15 @@ export async function getUserIdByRefreshToken(token: string) {
   `;
 
   return id && camelcaseKeys(id);
+}
+
+export async function killAllRefreshTokensForUserById(id: number) {
+  await sql`
+    DELETE FROM
+      refreshTokens
+    WHERE
+      user_id = ${id}
+  `;
 }
 
 export async function deleteExpiredAccessTokens() {
@@ -280,17 +369,4 @@ export async function set2FaUnixT0ForUser(id: number, unixTime: number) {
     WHERE
       id = ${id}
   `;
-}
-
-export async function getSettingsForUserById(id: number) {
-  const [settings] = await sql<[Settings]>`
-    SELECT
-      *
-    FROM
-      userSettings
-    WHERE
-      user_id =${id}
-  `;
-
-  return camelcaseKeys(settings);
 }

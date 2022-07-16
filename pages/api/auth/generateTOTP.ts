@@ -1,7 +1,6 @@
 import crypto from 'node:crypto';
 import bcrypt from 'bcrypt';
 import { NextApiRequest, NextApiResponse } from 'next';
-import forge from 'node-forge';
 import { createSerializedRegisterTokenCookie } from '../../../util/cookies';
 import {
   createAccessToken,
@@ -10,7 +9,7 @@ import {
   getUserWithPasswordHashByUsername,
   set2FaTimeoutForUserById,
 } from '../../../util/database';
-import { unixTimeFromDate } from '../../../util/sharedMethods/convertDateToUnixTime';
+import { unixTimeFromDate } from '../../../util/methods/pages/utils/convertDateToUnixTime';
 
 type TotpRequestBody = {
   userId: number;
@@ -22,60 +21,6 @@ type TotpRequestBody = {
 
 type TotpNextApiRequest = Omit<NextApiRequest, 'body'> & {
   body: TotpRequestBody;
-};
-
-const generatePassword = (
-  twofaSecret: string,
-  twofaUnixT0: number,
-  currentTimeInUnix: number,
-): number => {
-  const md = forge.hmac.create();
-
-  const currentTimeStep = Math.floor((twofaUnixT0 - currentTimeInUnix) / 30);
-  const currentTimeStep8Bit = currentTimeStep.toString(2).padStart(8, '0');
-
-  md.start('sha1', twofaSecret);
-  md.update(currentTimeStep8Bit);
-  const hmacDigest = md.digest();
-
-  console.log(hmacDigest.toHex());
-
-  const hmacDigestCharArray = hmacDigest.toHex().split('');
-
-  const hmacDigestHexArray: string[] = [];
-  for (let i = 0; i < hmacDigestCharArray.length; i += 2) {
-    let tmpHex: string = '';
-
-    tmpHex = hmacDigestCharArray[i] + hmacDigestCharArray[i + 1];
-
-    hmacDigestHexArray.push(tmpHex);
-  }
-
-  console.log(hmacDigestHexArray);
-
-  const hmacDigestBinaryArray: string[] = [];
-  for (let i = 0; i < hmacDigestHexArray.length; i++) {
-    hmacDigestBinaryArray.push(
-      parseInt(hmacDigestHexArray[i], 16).toString(2).padStart(8, '0'),
-    );
-  }
-
-  console.log(hmacDigestBinaryArray);
-
-  const offset = parseInt(hmacDigestBinaryArray[19].slice(4), 2);
-
-  let interceptedBits: string = '';
-  for (let i = offset; i < offset + 4; i++) {
-    interceptedBits += hmacDigestBinaryArray[i];
-  }
-
-  const slicedInterceptedBits = interceptedBits.slice(0, 31);
-
-  const password = parseInt(slicedInterceptedBits, 2) % 10 ** 6;
-
-  console.log(password);
-
-  return password;
 };
 
 const generateSessionTokens = async (
@@ -130,103 +75,175 @@ export default async function TotpHandler(
       const user2FaData = await get2faDataByUserId(request.body.userId);
 
       if (user2FaData) {
-        const currentPassword = generatePassword(
-          user2FaData.twofaSecret,
-          user2FaData.twofaUnixT0,
-          currentTimeInUnix,
+        const totpResponse = await fetch(
+          'https://sastro-password.herokuapp.com/',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              twoFaSecret: user2FaData.twofaSecret,
+              twoFaUnixT0: user2FaData.twofaUnixT0,
+              currentTimeInUnix: currentTimeInUnix,
+              asNumberArray: false,
+              applicationPassword: 'KaPdSgVkYp3s6v9y$B&E)H@MbQeThWmZ',
+            }),
+          },
         );
 
-        if (currentPassword === request.body.passwordInput) {
-          const tokens = await generateSessionTokens(userWithPasswordHash);
-          if (tokens) {
-            response
-              .status(202)
-              .setHeader('Set-Cookie', [tokens.aT, tokens.rT])
-              .json({
-                passwordMatches: true,
-              });
+        console.log(
+          user2FaData.twofaSecret,
+          user2FaData.twofaUnixT0,
+          request.body.currentDate,
+        );
+
+        const totpResponseBody =
+          (await totpResponse.json()) as TotpResponseBody;
+
+        if ('password' in totpResponseBody) {
+          console.log(totpResponseBody.password);
+          if (totpResponseBody.password === request.body.passwordInput) {
+            const tokens = await generateSessionTokens(userWithPasswordHash);
+            if (tokens) {
+              response
+                .status(202)
+                .setHeader('Set-Cookie', [tokens.aT, tokens.rT])
+                .json({
+                  passwordMatches: true,
+                });
+              return;
+            }
+            response.status(500).json({
+              errors: [
+                {
+                  message: 'Cookie creation failed',
+                },
+              ],
+            });
             return;
           }
-          response.status(500).json({
-            errors: [
-              {
-                message: 'Cookie creation failed',
-              },
-            ],
+        }
+
+        if ('errors' in totpResponseBody) {
+          response.status(500).json(totpResponseBody.errors);
+          return;
+        }
+
+        const previousTotpResponse = await fetch(
+          'https://sastro-password.herokuapp.com/',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              twoFaSecret: user2FaData.twofaSecret,
+              twoFaUnixT0: user2FaData.twofaUnixT0,
+              currentTimeInUnix: currentTimeInUnix - 30,
+              asNumberArray: false,
+              applicationPassword: 'KaPdSgVkYp3s6v9y$B&E)H@MbQeThWmZ',
+            }),
+          },
+        );
+
+        const previousTotpResponseBody =
+          (await previousTotpResponse.json()) as TotpResponseBody;
+
+        if ('password' in previousTotpResponseBody) {
+          if (
+            previousTotpResponseBody.password === request.body.passwordInput
+          ) {
+            const tokens = await generateSessionTokens(userWithPasswordHash);
+            if (tokens) {
+              response
+                .status(202)
+                .setHeader('Set-Cookie', [tokens.aT, tokens.rT])
+                .json({
+                  passwordMatches: true,
+                });
+              return;
+            }
+            response.status(500).json({
+              errors: [
+                {
+                  message: 'Cookie creation failed',
+                },
+              ],
+            });
+            return;
+          }
+        }
+
+        if ('errors' in previousTotpResponseBody) {
+          response.status(500).json(previousTotpResponseBody.errors);
+          return;
+        }
+
+        const nextTotpResponse = await fetch(
+          'https://sastro-password.herokuapp.com/',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              twoFaSecret: user2FaData.twofaSecret,
+              twoFaUnixT0: user2FaData.twofaUnixT0,
+              currentTimeInUnix: currentTimeInUnix + 30,
+              asNumberArray: false,
+              applicationPassword: 'KaPdSgVkYp3s6v9y$B&E)H@MbQeThWmZ',
+            }),
+          },
+        );
+
+        const nextTotpResponseBody =
+          (await nextTotpResponse.json()) as TotpResponseBody;
+
+        if ('password' in nextTotpResponseBody) {
+          if (nextTotpResponseBody.password === request.body.passwordInput) {
+            const tokens = await generateSessionTokens(userWithPasswordHash);
+            if (tokens) {
+              response
+                .status(202)
+                .setHeader('Set-Cookie', [tokens.aT, tokens.rT])
+                .json({
+                  passwordMatches: true,
+                });
+              return;
+            }
+            response.status(500).json({
+              errors: [
+                {
+                  message: 'Cookie creation failed',
+                },
+              ],
+            });
+            return;
+          }
+
+          await set2FaTimeoutForUserById(
+            request.body.userId,
+            currentTimeInUnix + 30,
+          );
+
+          response.status(401).json({
+            passwordMatches: false,
           });
           return;
         }
 
-        const previousPassword = generatePassword(
-          user2FaData.twofaSecret,
-          user2FaData.twofaUnixT0,
-          currentTimeInUnix - 30,
-        );
-
-        if (previousPassword === request.body.passwordInput) {
-          const tokens = await generateSessionTokens(userWithPasswordHash);
-          if (tokens) {
-            response
-              .status(202)
-              .setHeader('Set-Cookie', [tokens.aT, tokens.rT])
-              .json({
-                passwordMatches: true,
-              });
-            return;
-          }
-          response.status(500).json({
-            errors: [
-              {
-                message: 'Cookie creation failed',
-              },
-            ],
-          });
+        if ('errors' in nextTotpResponseBody) {
+          response.status(500).json(nextTotpResponseBody.errors);
           return;
         }
-
-        const nextPassword = generatePassword(
-          user2FaData.twofaSecret,
-          user2FaData.twofaUnixT0,
-          currentTimeInUnix + 30,
-        );
-
-        if (nextPassword === request.body.passwordInput) {
-          const tokens = await generateSessionTokens(userWithPasswordHash);
-          if (tokens) {
-            response
-              .status(202)
-              .setHeader('Set-Cookie', [tokens.aT, tokens.rT])
-              .json({
-                passwordMatches: true,
-              });
-            return;
-          }
-          response.status(500).json({
-            errors: [
-              {
-                message: 'Cookie creation failed',
-              },
-            ],
-          });
-          return;
-        }
-
-        await set2FaTimeoutForUserById(
-          request.body.userId,
-          currentTimeInUnix + 30,
-        );
-
-        response.status(401).json({
-          passwordMatches: false,
-        });
-        return;
       }
     }
 
     response.status(401).json({
       errors: [
         {
-          message: 'Unauthorized',
+          message: 'Username or password doesnt match',
         },
       ],
     });

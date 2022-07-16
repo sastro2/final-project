@@ -3,4 +3,9 @@ const nextConfig = {
   reactStrictMode: false,
 };
 
-module.exports = nextConfig;
+module.exports = {
+  images: {
+    domains: ['st.zoocdn.com'],
+  },
+  nextConfig,
+};

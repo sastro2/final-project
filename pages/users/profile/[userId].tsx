@@ -5,82 +5,61 @@ import { useState } from 'react';
 import { generateCsrfToken } from '../../../util/auth';
 import {
   getSettingsForUserById,
+  getUserIdByAccessToken,
   getUserIdByRefreshToken,
   getUserWith2FaSecretById,
 } from '../../../util/database';
-import { unixTimeFromNumber } from '../../../util/sharedMethods/convertDateToUnixTime';
+import {
+  handle2FaUnixT0,
+  toggle2FaSetting,
+} from '../../../util/methods/pages/users/profile/userProfileFunctions';
 import { RefreshAccessResponseBody } from '../../api/auth/refreshAccess';
 
-type UserProfileProps = {
+export type UserProfileProps = {
   access: boolean;
   settings?: Settings;
   user?: User;
+  reusedRefreshToken?: boolean;
 };
 
 export default function UserDetail(props: UserProfileProps) {
   const [showQrCode, setShowQrCode] = useState(false);
   const [unixTime, setUnixTime] = useState(props.user?.twofaUnixT0);
+  const [twoFaTurnedOn, setTwoFaTurnedOn] = useState<boolean>(
+    props.settings ? props.settings.has2Fa : false,
+  );
+
+  if (props.reusedRefreshToken) {
+    return <h1>Token reuse detected please relog</h1>;
+  }
 
   if (!props.access) {
     return <h1>Please log in or register</h1>;
   }
-
-  const toggle2FaSetting = async () => {
-    if (props.settings && props.user) {
-      await fetch('/api/settings/toggle2Fa', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId: props.user.id,
-          unixT0: props.user.twofaUnixT0,
-          set2FaTo: !props.settings.has2Fa,
-        }),
-      });
-    }
-    setShowQrCode(!showQrCode);
-  };
-
-  const handle2FaUnixT0 = async () => {
-    if (showQrCode) {
-      if (!unixTime) {
-        const currentTime = unixTimeFromNumber(Date.now());
-
-        setUnixTime(currentTime);
-        if (props.user) {
-          await fetch('/api/settings/set2FaUnixT0', {
-            body: JSON.stringify({
-              userId: props.user.id,
-              unixTime: currentTime,
-            }),
-          });
-        }
-      }
-    }
-  };
 
   return (
     <>
       <h1>Profile</h1>
       {props.settings ? (
         <div>
-          {props.settings.has2Fa ? (
-            <h3>2FA turned on</h3>
-          ) : (
-            <h3>2FA turned off</h3>
-          )}
+          {twoFaTurnedOn ? <h3>2FA turned on</h3> : <h3>2FA turned off</h3>}
           <button
             onClick={async () => [
-              await toggle2FaSetting(),
-              await handle2FaUnixT0(),
+              await toggle2FaSetting(props, twoFaTurnedOn),
+              await handle2FaUnixT0(props, showQrCode, unixTime, setUnixTime),
+              setTwoFaTurnedOn(!twoFaTurnedOn),
             ]}
           >
             Toggle 2FA
           </button>
         </div>
       ) : null}
-      {showQrCode && props.user?.twofaSecret ? (
+      {twoFaTurnedOn ? (
+        <button onClick={() => setShowQrCode(!showQrCode)}>
+          {showQrCode ? 'Hide QR Code' : 'Show QR Code'}
+        </button>
+      ) : null}
+      {showQrCode && props.user?.twofaSecret && unixTime ? (
         <QRCodeSVG
           size={256}
           value={`${props.user.twofaSecret},${unixTime}, ${props.user.username}`}
@@ -98,7 +77,11 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const accessToken = context.req.cookies.aT;
   const refreshToken = context.req.cookies.rT;
 
-  const tokenUserId = await getUserIdByRefreshToken(refreshToken);
+  let tokenUserId;
+
+  if (refreshToken) {
+    tokenUserId = await getUserIdByRefreshToken(refreshToken);
+  }
 
   const cookies = new Cookies(context.req, context.res);
 
@@ -148,20 +131,27 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       (await refreshAccessResponse.json()) as RefreshAccessResponseBody;
 
     if ('cookies' in refreshAccessResponseBody) {
-      console.log('5');
-
       cookies.set(refreshAccessResponseBody.cookies.rT);
-      cookies.set(refreshAccessResponseBody.cookies.aT);
 
-      const settings = await getSettingsForUserById(userId);
-      console.log('here');
+      if (!refreshAccessResponseBody.cookies.reusedRefreshToken) {
+        cookies.set(refreshAccessResponseBody.cookies.aT);
+        const settings = await getSettingsForUserById(userId);
+        console.log(refreshAccessResponseBody.cookies.reusedRefreshToken);
+
+        return {
+          props: {
+            userId: userId,
+            access: true,
+            settings: settings,
+            user: user,
+          },
+        };
+      }
 
       return {
         props: {
-          userId: userId,
-          access: true,
-          settings: settings,
-          user: user,
+          access: false,
+          reusedRefreshToken: true,
         },
       };
     }
@@ -177,7 +167,9 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   if (accessToken && userId) {
     console.log('7');
 
-    if (userId === tokenUserId?.userId) {
+    const accessUserId = await getUserIdByAccessToken(accessToken);
+
+    if (userId === accessUserId?.userId) {
       const user = await getUserWith2FaSecretById(userId);
       console.log('8');
 
@@ -192,5 +184,11 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
         },
       };
     }
+
+    return {
+      props: {
+        access: false,
+      },
+    };
   }
 }

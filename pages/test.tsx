@@ -1,13 +1,9 @@
+import PropertyImageCarousel from '../Components/Property/Carousel';
+
 export default function Test() {
   return (
     <>
-      <button
-        onClick={async () => {
-          await fetch('http://localhost:3000/api/auth/generateTOTP');
-        }}
-      >
-        Totp Test
-      </button>
+      <PropertyImageCarousel />
       <button
         onClick={async () => {
           const response = await fetch('http://localhost:4000/', {
@@ -16,7 +12,7 @@ export default function Test() {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              twoFaSecret: 'foniwfown23r209hdfwnefd',
+              twoFaSecret: 'üüüüüüüüüüüüüüüüüüüü',
               twoFaUnixT0: 1234,
               currentTimeInUnix: 2345,
               asNumberArray: false,
@@ -36,6 +32,23 @@ export default function Test() {
         }}
       >
         Express Server Test
+      </button>
+      <button
+        onClick={async () => {
+          await fetch('/api/settings/set2FaUnixT0', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              userId: 6,
+              unixTime: 6,
+            }),
+          });
+          await fetch('http://localhost:3000/api/tests');
+        }}
+      >
+        getunixt0
       </button>
     </>
   );
