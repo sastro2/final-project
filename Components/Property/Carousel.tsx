@@ -8,6 +8,7 @@ import { useState } from 'react';
 import SwipeableViews from 'react-swipeable-views';
 import { autoPlay } from 'react-swipeable-views-utils';
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const AutoPlaySwipeableViews = autoPlay(SwipeableViews);
 
 export type CarouselImage = {
