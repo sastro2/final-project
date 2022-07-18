@@ -112,7 +112,7 @@ export default function Map(props: MapProps) {
             },
             headers: {
               'X-RapidAPI-Key':
-                '87a3223e12mshecbd30f5c87c23bp1912e3jsn7ff93b3e0f99',
+                'a1dc1a29d9msh550f536bda95b23p1b94f7jsn783982c2ea68',
               'X-RapidAPI-Host': 'zoopla.p.rapidapi.com',
             },
           };
@@ -134,7 +134,7 @@ export default function Map(props: MapProps) {
             },
             headers: {
               'X-RapidAPI-Key':
-                '87a3223e12mshecbd30f5c87c23bp1912e3jsn7ff93b3e0f99',
+                'a1dc1a29d9msh550f536bda95b23p1b94f7jsn783982c2ea68',
               'X-RapidAPI-Host': 'zoopla.p.rapidapi.com',
             },
           };
@@ -155,7 +155,7 @@ export default function Map(props: MapProps) {
           },
           headers: {
             'X-RapidAPI-Key':
-              '87a3223e12mshecbd30f5c87c23bp1912e3jsn7ff93b3e0f99',
+              'a1dc1a29d9msh550f536bda95b23p1b94f7jsn783982c2ea68',
             'X-RapidAPI-Host': 'zoopla.p.rapidapi.com',
           },
         };

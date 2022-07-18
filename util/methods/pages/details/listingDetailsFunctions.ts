@@ -15,7 +15,7 @@ export const fetchPointsOfInterest = async (
     url: 'https://zoopla.p.rapidapi.com/properties/get-nearby',
     params: { listing_id: listingId },
     headers: {
-      'X-RapidAPI-Key': 'a74f961ba7msh62ea9a4969454c6p1dd9a4jsncd6b433b6c2e',
+      'X-RapidAPI-Key': 'a1dc1a29d9msh550f536bda95b23p1b94f7jsn783982c2ea68',
       'X-RapidAPI-Host': 'zoopla.p.rapidapi.com',
     },
   };

@@ -1,14 +1,22 @@
 import { Switch } from '@material-ui/core';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import EditIcon from '@mui/icons-material/Edit';
 import KeyboardReturnIcon from '@mui/icons-material/KeyboardReturn';
+import SaveIcon from '@mui/icons-material/Save';
 import SettingsIcon from '@mui/icons-material/Settings';
-import { Button, Typography } from '@mui/material';
+import {
+  Button,
+  Card,
+  Grid,
+  IconButton,
+  TextField,
+  Typography,
+} from '@mui/material';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
 import Cookies from 'cookies';
 import { GetServerSidePropsContext } from 'next';
 import { useRouter } from 'next/router';
-import { QRCodeSVG } from 'qrcode.react';
 import { SyntheticEvent, useState } from 'react';
 import Header from '../../../Components/Layout/Header';
 import ProfileToggle2FaModal from '../../../Components/users/profile/ProfileToggle2FaModal';
@@ -19,10 +27,6 @@ import {
   getUserIdByRefreshToken,
   getUserWith2FaSecretById,
 } from '../../../util/database';
-import {
-  handle2FaUnixT0,
-  toggle2FaSetting,
-} from '../../../util/methods/pages/users/profile/userProfileFunctions';
 import { RefreshAccessResponseBody } from '../../api/auth/refreshAccess';
 
 export type UserProfileProps = {
@@ -33,7 +37,6 @@ export type UserProfileProps = {
 };
 
 export default function UserDetail(props: UserProfileProps) {
-  const [showQrCode, setShowQrCode] = useState(false);
   const [unixTime, setUnixTime] = useState(props.user?.twofaUnixT0);
   const [twoFaTurnedOn, setTwoFaTurnedOn] = useState<boolean>(
     props.settings ? props.settings.has2Fa : false,
@@ -43,6 +46,8 @@ export default function UserDetail(props: UserProfileProps) {
     props.settings ? props.settings.has2Fa : false,
   );
   const [twoFaModalActive, setTwoFaModalActive] = useState<boolean>(false);
+  const [profileEditWindowActive, setProfileEditWindowActive] =
+    useState<boolean>(false);
 
   const router = useRouter();
 
@@ -65,10 +70,16 @@ export default function UserDetail(props: UserProfileProps) {
   if (activeTab === 1) {
     return (
       <>
-        {twoFaModalActive && props.user?.twofaSecret && unixTime ? (
+        {twoFaModalActive && props.user?.twofaSecret ? (
           <ProfileToggle2FaModal
             twoFaTurnedOn={twoFaTurnedOn}
-            qrCodeValue={`${props.user.twofaSecret},${unixTime}, ${props.user.username}`}
+            setTwoFaTurnedOn={setTwoFaTurnedOn}
+            qrCodeValue={`${props.user.twofaSecret},${unixTime}, ${props.user.username} - Home scout`}
+            setTwoFaSwitchChecked={setTwoFaSwitchChecked}
+            setTwoFaModalActive={setTwoFaModalActive}
+            props={props}
+            unixTime={unixTime}
+            setUnixTime={setUnixTime}
           />
         ) : null}
         <Header loggedIn user={props.user} />
@@ -86,44 +97,21 @@ export default function UserDetail(props: UserProfileProps) {
           </Tabs>
         </div>
         {props.settings ? (
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <Typography variant="subtitle1">2FA</Typography>
-              <Switch
-                color="primary"
-                checked={twoFaSwitchChecked}
-                onChange={() => setTwoFaModalActive(true)}
-              />
-            </div>
-            {twoFaTurnedOn ? <h3>2FA turned on</h3> : <h3>2FA turned off</h3>}
-            <button
-              onClick={async () => [
-                await toggle2FaSetting(props, twoFaTurnedOn),
-                await handle2FaUnixT0(props, showQrCode, unixTime, setUnixTime),
-                setTwoFaTurnedOn(!twoFaTurnedOn),
-              ]}
-            >
-              Toggle 2FA
-            </button>
+          <div style={{ display: 'flex', alignItems: 'center', margin: '2%' }}>
+            <Typography variant="subtitle1">2-Factor-Authentication</Typography>
+            <Switch
+              color="primary"
+              checked={twoFaSwitchChecked}
+              onChange={() => setTwoFaModalActive(true)}
+            />
           </div>
-        ) : null}
-        {twoFaTurnedOn ? (
-          <button onClick={() => setShowQrCode(!showQrCode)}>
-            {showQrCode ? 'Hide QR Code' : 'Show QR Code'}
-          </button>
-        ) : null}
-        {showQrCode && props.user?.twofaSecret && unixTime ? (
-          <QRCodeSVG
-            size={256}
-            value={`${props.user.twofaSecret},${unixTime}, ${props.user.username}`}
-          />
         ) : null}
       </>
     );
   }
 
   return (
-    <>
+    <main>
       <Header loggedIn user={props.user} />
       <div style={{ display: 'flex' }}>
         <Button
@@ -138,7 +126,84 @@ export default function UserDetail(props: UserProfileProps) {
           <Tab icon={<SettingsIcon />} label="Settings" />
         </Tabs>
       </div>
-    </>
+      <section>
+        <Typography margin="2%" variant="h2">
+          {props.user?.username}
+        </Typography>
+        <Card
+          style={{
+            margin: '2%',
+            maxWidth: '500px',
+            padding: '1%',
+          }}
+        >
+          {!profileEditWindowActive ? (
+            <Grid container rowSpacing={2}>
+              <Grid item xs={12} display="flex" justifyContent="space-between">
+                <Typography variant="h5">Personal information</Typography>
+                <IconButton onClick={() => setProfileEditWindowActive(true)}>
+                  <EditIcon />
+                </IconButton>
+              </Grid>
+              <Grid item xs={12}>
+                <Typography variant="h6">
+                  Name: {props.user?.firstName}
+                </Typography>
+              </Grid>
+              <Grid item xs={12}>
+                <Typography variant="h6">
+                  Surname: {props.user?.lastName}
+                </Typography>
+              </Grid>
+              <Grid item xs={12}>
+                <Typography variant="h6">Email {props.user?.email}</Typography>
+              </Grid>
+            </Grid>
+          ) : (
+            <Grid container rowSpacing={1}>
+              <Grid item xs={12} display="flex" justifyContent="space-between">
+                <Typography variant="h5">Personal information</Typography>
+                <IconButton onClick={() => [setProfileEditWindowActive(false)]}>
+                  <SaveIcon />
+                </IconButton>
+              </Grid>
+              <Grid item xs={12} display="flex" alignItems="center">
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    width: '100%',
+                  }}
+                >
+                  <Typography variant="h6">Name:</Typography>
+                  <TextField
+                    size="small"
+                    style={{ marginLeft: '4%', marginRight: '15%' }}
+                    fullWidth
+                  />
+                </div>
+              </Grid>
+              <Grid item xs={12} display="flex" alignItems="center">
+                <Typography variant="h6">Surname:</Typography>
+                <TextField
+                  size="small"
+                  style={{ marginLeft: '4%', marginRight: '15%' }}
+                  fullWidth
+                />
+              </Grid>
+              <Grid item xs={12} display="flex" alignItems="center">
+                <Typography variant="h6">Email:</Typography>
+                <TextField
+                  size="small"
+                  style={{ marginLeft: '4%', marginRight: '15%' }}
+                  fullWidth
+                />
+              </Grid>
+            </Grid>
+          )}
+        </Card>
+      </section>
+    </main>
   );
 }
 

@@ -1,6 +1,7 @@
 import { MenuItem } from '@material-ui/core';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import AdbIcon from '@mui/icons-material/Adb';
+import HouseIcon from '@mui/icons-material/House';
 import MenuIcon from '@mui/icons-material/Menu';
 import AppBar from '@mui/material/AppBar';
 import Avatar from '@mui/material/Avatar';
@@ -20,7 +21,7 @@ type HeaderProps = {
   user: User | undefined;
 };
 
-const pages = ['For sale', 'To rent', 'News'];
+const pages = ['Buy', 'Rent'];
 const loggedInProfileDropdown = ['Profile', 'Logout'];
 
 export default function Header(props: HeaderProps) {
@@ -36,7 +37,19 @@ export default function Header(props: HeaderProps) {
     setAnchorElUser(event.currentTarget);
   };
 
-  const handleCloseNavMenu = () => {
+  const handleCloseNavMenu = async (page: string) => {
+    switch (page) {
+      case 'Buy':
+        await router.push('/sale');
+        break;
+      case 'Rent':
+        await router.push('/rent');
+        break;
+      case 'News':
+        await router.push('/news');
+        break;
+    }
+
     setAnchorElNav(null);
   };
 
@@ -60,7 +73,7 @@ export default function Header(props: HeaderProps) {
     <AppBar position="static">
       <Container maxWidth="xl">
         <Toolbar disableGutters>
-          <AdbIcon sx={{ display: { xs: 'none', md: 'flex' }, mr: 1 }} />
+          <HouseIcon sx={{ display: { xs: 'none', md: 'flex' }, mr: 1 }} />
           <Typography
             variant="h6"
             noWrap
@@ -109,8 +122,10 @@ export default function Header(props: HeaderProps) {
               }}
             >
               {pages.map((page) => (
-                <MenuItem key={page} onClick={handleCloseNavMenu}>
-                  <Typography textAlign="center">{page}</Typography>
+                <MenuItem key={page} onClick={() => handleCloseNavMenu(page)}>
+                  <Typography color="black" textAlign="center">
+                    {page}
+                  </Typography>
                 </MenuItem>
               ))}
             </Menu>
@@ -138,7 +153,7 @@ export default function Header(props: HeaderProps) {
             {pages.map((page) => (
               <Button
                 key={page}
-                onClick={handleCloseNavMenu}
+                onClick={() => handleCloseNavMenu(page)}
                 sx={{ my: 2, color: 'black', display: 'block' }}
               >
                 {page}
@@ -151,10 +166,7 @@ export default function Header(props: HeaderProps) {
               <>
                 <Tooltip title="Profile options">
                   <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                    <Avatar
-                      alt="Remy Sharp"
-                      src="/static/images/avatar/2.jpg"
-                    />
+                    <Avatar alt="Remy Sharp" />
                   </IconButton>
                 </Tooltip>
                 <Menu

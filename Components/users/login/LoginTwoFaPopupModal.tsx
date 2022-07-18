@@ -265,7 +265,12 @@ export default function LoginTwoFaPopupModal(props: LoginTwoFaPopupModalProps) {
                 }
                 required
               />
-              <Button type="submit" variant="contained" sx={{ ml: '5px' }}>
+              <Button
+                type="submit"
+                variant="contained"
+                style={{ marginLeft: '8px' }}
+                sx={{ ml: '5px' }}
+              >
                 SIGN IN
               </Button>
             </form>

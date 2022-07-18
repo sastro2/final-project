@@ -1,9 +1,16 @@
 import { Checkbox } from '@material-ui/core';
-import { Button, Typography } from '@mui/material';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import { Button, Grid, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import Modal from '@mui/material/Modal';
 import { QRCodeSVG } from 'qrcode.react';
-import { useState } from 'react';
+import { Dispatch, SetStateAction, useState } from 'react';
+import { UserProfileProps } from '../../../pages/users/profile/[userId]';
+import {
+  handle2FaUnixT0,
+  toggle2FaSetting,
+} from '../../../util/methods/pages/users/profile/userProfileFunctions';
 
 const style = {
   position: 'absolute' as 'absolute',
@@ -13,18 +20,34 @@ const style = {
   width: 400,
   bgcolor: 'background.paper',
   border: '2px solid #000',
+  borderRadius: '5px',
   boxShadow: 24,
   p: 4,
 };
 
-const handleContinueClicked = (scannedCodeChecked: boolean) => {
+const handleContinueClicked = async (
+  scannedCodeChecked: boolean,
+  setTwoFaSwitchChecked: Dispatch<SetStateAction<boolean>>,
+  props: UserProfileProps,
+  twoFaTurnedOn: boolean,
+  setTwoFaTurnedOn: Dispatch<SetStateAction<boolean>>,
+) => {
   if (scannedCodeChecked) {
+    await toggle2FaSetting(props, twoFaTurnedOn);
+    setTwoFaTurnedOn(true);
+    setTwoFaSwitchChecked(true);
   }
 };
 
 type ProfileToggle2FaModalProps = {
   twoFaTurnedOn: boolean;
+  setTwoFaTurnedOn: Dispatch<SetStateAction<boolean>>;
   qrCodeValue: string;
+  setTwoFaSwitchChecked: Dispatch<SetStateAction<boolean>>;
+  setTwoFaModalActive: Dispatch<SetStateAction<boolean>>;
+  props: UserProfileProps;
+  unixTime: number | undefined;
+  setUnixTime: Dispatch<SetStateAction<number | undefined>>;
 };
 
 export default function ProfileToggle2FaModal(
@@ -32,8 +55,12 @@ export default function ProfileToggle2FaModal(
 ) {
   const [open, setOpen] = useState(true);
   const [scannedCodeChecked, setScannedCodeChecked] = useState<boolean>(false);
+  const [showQrCode, setShowQrCode] = useState<boolean>(false);
 
-  const handleClose = () => setOpen(false);
+  const handleClose = () => {
+    setOpen(false);
+    props.setTwoFaModalActive(false);
+  };
 
   return (
     <div>
@@ -44,7 +71,7 @@ export default function ProfileToggle2FaModal(
         aria-describedby="modal-modal-description"
       >
         <Box sx={style}>
-          {props.twoFaTurnedOn ? (
+          {!props.twoFaTurnedOn ? (
             <div
               style={{
                 display: 'flex',
@@ -52,7 +79,9 @@ export default function ProfileToggle2FaModal(
                 alignItems: 'center',
               }}
             >
-              <Typography variant="h4">To turn on 2FA</Typography>
+              <Typography variant="h4" marginBottom="25px">
+                To turn on 2FA
+              </Typography>
               <Typography variant="subtitle1">
                 1. Download the sastro-auth app
               </Typography>
@@ -62,8 +91,49 @@ export default function ProfileToggle2FaModal(
               <Typography variant="subtitle1">
                 3. Scan the following QR Code
               </Typography>
-              <QRCodeSVG size={256} value={props.qrCodeValue} />
-              <div style={{ display: 'flex', alignItems: 'center' }}>
+              <Button
+                onClick={async () => [
+                  await handle2FaUnixT0(
+                    props.props,
+                    props.unixTime,
+                    props.setUnixTime,
+                  ),
+                  setShowQrCode(!showQrCode),
+                ]}
+              >
+                {!showQrCode ? (
+                  <Typography
+                    variant="subtitle2"
+                    display="flex"
+                    alignItems="center"
+                    marginTop="8px"
+                  >
+                    <KeyboardArrowDownIcon />
+                    Show QR Code
+                  </Typography>
+                ) : (
+                  <Typography
+                    variant="subtitle2"
+                    display="flex"
+                    alignItems="center"
+                    marginTop="8px"
+                    marginBottom="2px"
+                  >
+                    <KeyboardArrowUpIcon />
+                    Hide QR Code
+                  </Typography>
+                )}
+              </Button>
+              {showQrCode ? (
+                <QRCodeSVG size={256} value={props.qrCodeValue} />
+              ) : null}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  marginTop: '25px',
+                }}
+              >
                 <Typography variant="subtitle2">
                   I have scanned the QR Code
                 </Typography>
@@ -73,13 +143,49 @@ export default function ProfileToggle2FaModal(
                 />
                 <Button
                   variant="contained"
-                  onClick={() => handleContinueClicked(scannedCodeChecked)}
+                  onClick={async () => [
+                    await handleContinueClicked(
+                      scannedCodeChecked,
+                      props.setTwoFaSwitchChecked,
+                      props.props,
+                      props.twoFaTurnedOn,
+                      props.setTwoFaTurnedOn,
+                    ),
+                    handleClose(),
+                  ]}
                 >
                   CONTINUE
                 </Button>
               </div>
             </div>
-          ) : null}
+          ) : (
+            <Grid container>
+              <Grid item xs={12}>
+                <Typography variant="h6">
+                  Do you really want to turn off 2FA?
+                </Typography>
+              </Grid>
+              <Grid
+                item
+                xs={12}
+                display="flex"
+                justifyContent="center"
+                marginTop="20px"
+              >
+                <Button
+                  onClick={async () => [
+                    await toggle2FaSetting(props.props, true),
+                    props.setTwoFaSwitchChecked(false),
+                    props.setTwoFaTurnedOn(false),
+                    handleClose(),
+                  ]}
+                >
+                  YES
+                </Button>
+                <Button onClick={() => handleClose()}>NO</Button>
+              </Grid>
+            </Grid>
+          )}
         </Box>
       </Modal>
     </div>

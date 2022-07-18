@@ -47,8 +47,14 @@ const calculatePriceWeight = (
   console.log(weight);
   return weight;
 };
-const calculateRentWeight = (averageRent: number, listing: Listing): number => {
-  let difference = (averageRent - listing.rental_prices.per_month) / 200;
+const calculateRentWeight = (
+  averageRent: number,
+  listing: Listing,
+  toRent: boolean,
+): number => {
+  let difference = toRent
+    ? (averageRent - listing.rental_prices.per_month) / 200
+    : (averageRent - +listing.price) / 100000;
 
   if (difference < 1) {
     difference = 1;
@@ -62,7 +68,6 @@ const calculateRentWeight = (averageRent: number, listing: Listing): number => {
 
   const weight = 1 / rentDelta;
 
-  console.log(averageRent, listing.rental_prices.per_month, rentDelta, weight);
   return weight;
 };
 

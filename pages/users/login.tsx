@@ -13,6 +13,7 @@ import { GetServerSidePropsContext } from 'next';
 import { useRouter } from 'next/router';
 import * as React from 'react';
 import { FormEvent, useState } from 'react';
+import Header from '../../Components/Layout/Header';
 import LoginTwoFaPopupModal from '../../Components/users/login/LoginTwoFaPopupModal';
 import { generateCsrfToken } from '../../util/auth';
 import { getUserIdByRefreshToken } from '../../util/database';
@@ -174,6 +175,7 @@ export default function Login(props: LoginProps) {
 
   return (
     <>
+      <Header loggedIn={false} user={undefined} />
       <ThemeProvider theme={theme}>
         <Container component="main" maxWidth="xs">
           <CssBaseline />

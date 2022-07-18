@@ -23,7 +23,6 @@ export const toggle2FaSetting = async (
 
 export const handle2FaUnixT0 = async (
   props: UserProfileProps,
-  showQrCode: boolean,
   unixTime: number | undefined,
   setUnixTime: Dispatch<SetStateAction<number | undefined>>,
 ) => {
