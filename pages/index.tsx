@@ -86,7 +86,7 @@ export default function Home(props: HomeProps) {
       });
   }, [deferredInput]);
 
-  console.log(autocompleteResult);
+  console.log(autocomplete);
 
   if (props.reusedRefreshToken) {
     return <h1>Token reuse detected please relog</h1>;

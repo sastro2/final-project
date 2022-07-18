@@ -69,6 +69,8 @@ export default function Sale(props: RentProps) {
       });
   }, [deferredInput]);
 
+  console.log(autocomplete);
+
   return (
     <>
       <Header loggedIn={props.loggedIn} user={props.user} />

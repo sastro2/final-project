@@ -4,7 +4,6 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
 import CssBaseline from '@mui/material/CssBaseline';
-import Grid from '@mui/material/Grid';
 import Link from '@mui/material/Link';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import TextField from '@mui/material/TextField';
@@ -28,7 +27,6 @@ function Copyright(props: any) {
         Your Website
       </Link>{' '}
       {new Date().getFullYear()}
-      {'.'}
     </Typography>
   );
 }
@@ -56,6 +54,8 @@ export default function Register(props: any) {
         csrfSaltId: props.csrfToken.id,
       }),
     });
+
+    console.log(registerResponse);
 
     await router.push('/');
   };
