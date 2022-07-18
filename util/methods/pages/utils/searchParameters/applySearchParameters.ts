@@ -121,16 +121,10 @@ export const applySearchParameters = (
       console.log(averageParams);
 
       weightedListing = data.listing.map((listing) => {
-        console.log(
-          calculateRoomsWeight(averageParams.averageRooms, listing),
-          calculateRentWeight(averageParams.averageRent, listing),
-          calculateRandomFactor(listing.listing_id),
-        );
-
         const weight =
           1 *
           calculateRoomsWeight(averageParams.averageRooms, listing) *
-          calculateRentWeight(averageParams.averageRent, listing) *
+          calculateRentWeight(averageParams.averageRent, listing, toRent) *
           calculateRandomFactor(listing.listing_id);
 
         return {
