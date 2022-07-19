@@ -462,7 +462,7 @@ export default function Listing(props: ListingProps) {
                   </Typography>
                   {foundListing.floor_plan.map((plan) => {
                     return (
-                      <Link href={plan} key={plan}>
+                      <Link href={plan} key={plan} target="_blank">
                         <img
                           src={plan}
                           style={{
