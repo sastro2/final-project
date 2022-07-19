@@ -16,7 +16,6 @@ import { useEffect, useRef, useState } from 'react';
 import Header from '../Components/Layout/Header';
 import PropertyImageCarousel from '../Components/Property/Carousel';
 import LoadingScreen from '../Components/util/LoadingScreen';
-import { RefreshAccessResponseBody } from '../pages/api/auth/refreshAccess';
 import { generateCsrfToken } from '../util/auth';
 import {
   getSearchParamsForUserById,
@@ -32,6 +31,7 @@ import {
   initializeClusters,
 } from '../util/methods/pages/mapFunctions';
 import { setParameters } from '../util/methods/pages/utils/searchParameters/setParameters';
+import { RefreshAccessResponseBody } from './api/auth/refreshAccess';
 
 type PkgBounds = {
   nwLng: number;
@@ -220,7 +220,13 @@ export default function Map(props: MapProps) {
     return <h1>Token reuse detected please relog</h1>;
   }
 
-  if (propertyData && townCoordinates && objectsToDisplay && !isLoading && props.googleKey) {
+  if (
+    propertyData &&
+    townCoordinates &&
+    objectsToDisplay &&
+    !isLoading &&
+    props.googleKey
+  ) {
     return (
       <>
         <Header loggedIn={props.loggedIn} user={props.user} />
