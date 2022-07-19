@@ -8,6 +8,7 @@ import LocationOnIcon from '@mui/icons-material/LocationOn';
 import { Button, Grid, Typography } from '@mui/material';
 import axios from 'axios';
 import Cookies from 'cookies';
+import { config } from 'dotenv-safe';
 import GoogleMapReact from 'google-map-react';
 import { GetServerSidePropsContext } from 'next';
 import { useRouter } from 'next/router';
@@ -60,6 +61,8 @@ export type MapProps = {
   user?: User;
   rentSearchParams: string | null;
   buySearchParams: string | null;
+  rapidApiKey: string | undefined;
+  googleKey: string | undefined;
 };
 
 const Marker = ({ children }: any) => children;
@@ -87,6 +90,10 @@ export default function Map(props: MapProps) {
 
   useEffect(() => {
     async function fetchData() {
+      if (!props.googleKey || !props.rapidApiKey) {
+        return;
+      }
+
       setIsLoading(true);
 
       const toRent = router.query.toRent === '0' ? 'rent' : 'sale';
@@ -111,8 +118,7 @@ export default function Map(props: MapProps) {
               page_size: '30',
             },
             headers: {
-              'X-RapidAPI-Key':
-                'a1dc1a29d9msh550f536bda95b23p1b94f7jsn783982c2ea68',
+              'X-RapidAPI-Key': props.rapidApiKey,
               'X-RapidAPI-Host': 'zoopla.p.rapidapi.com',
             },
           };
@@ -133,8 +139,7 @@ export default function Map(props: MapProps) {
               page_size: '30',
             },
             headers: {
-              'X-RapidAPI-Key':
-                'a1dc1a29d9msh550f536bda95b23p1b94f7jsn783982c2ea68',
+              'X-RapidAPI-Key': props.rapidApiKey,
               'X-RapidAPI-Host': 'zoopla.p.rapidapi.com',
             },
           };
@@ -154,8 +159,7 @@ export default function Map(props: MapProps) {
             page_size: '30',
           },
           headers: {
-            'X-RapidAPI-Key':
-              'a1dc1a29d9msh550f536bda95b23p1b94f7jsn783982c2ea68',
+            'X-RapidAPI-Key': props.rapidApiKey,
             'X-RapidAPI-Host': 'zoopla.p.rapidapi.com',
           },
         };
@@ -216,7 +220,7 @@ export default function Map(props: MapProps) {
     return <h1>Token reuse detected please relog</h1>;
   }
 
-  if (propertyData && townCoordinates && objectsToDisplay && !isLoading) {
+  if (propertyData && townCoordinates && objectsToDisplay && !isLoading && props.googleKey) {
     return (
       <>
         <Header loggedIn={props.loggedIn} user={props.user} />
@@ -335,7 +339,7 @@ export default function Map(props: MapProps) {
             >
               <GoogleMapReact
                 bootstrapURLKeys={{
-                  key: 'AIzaSyBTg924Z_lgqKWI3ZulRU6YgRUEDdmeclQ',
+                  key: props.googleKey,
                 }}
                 defaultCenter={{
                   lat: townCoordinates.lat,
@@ -562,6 +566,11 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const accessToken = context.req.cookies.aT;
   const refreshToken = context.req.cookies.rT;
 
+  config();
+
+  const rapidApiKey = process.env.RAPIDAPI_KEY;
+  const googleKey = process.env.GOOGLE_KEY;
+
   if (accessToken) {
     const userId = await getUserIdByAccessToken(accessToken);
 
@@ -579,6 +588,8 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
             rentSearchParams: params.rentSearchParameters
               ? params.rentSearchParameters
               : null,
+            rapidApiKey: rapidApiKey,
+            googleKey: googleKey,
           },
         };
       }
@@ -591,6 +602,8 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
             buySearchParams: params.buySearchParameters
               ? params.buySearchParameters
               : null,
+            rapidApiKey: rapidApiKey,
+            googleKey: googleKey,
           },
         };
       }
@@ -655,6 +668,8 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
                 rentSearchParams: params.rentSearchParameters
                   ? params.rentSearchParameters
                   : null,
+                rapidApiKey: rapidApiKey,
+                googleKey: googleKey,
               },
             };
           }
@@ -667,6 +682,8 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
                 buySearchParams: params.buySearchParameters
                   ? params.buySearchParameters
                   : null,
+                rapidApiKey: rapidApiKey,
+                googleKey: googleKey,
               },
             };
           }
@@ -687,6 +704,8 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   return {
     props: {
       loggedIn: false,
+      rapidApiKey: rapidApiKey,
+      googleKey: googleKey,
     },
   };
 }

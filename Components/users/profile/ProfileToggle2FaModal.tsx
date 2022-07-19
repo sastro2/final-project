@@ -1,7 +1,8 @@
-import { Checkbox } from '@material-ui/core';
+import { Checkbox, Fade } from '@material-ui/core';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import { Button, Grid, Typography } from '@mui/material';
+import Backdrop from '@mui/material/Backdrop';
 import Box from '@mui/material/Box';
 import Modal from '@mui/material/Modal';
 import { QRCodeSVG } from 'qrcode.react';
@@ -67,126 +68,131 @@ export default function ProfileToggle2FaModal(
       <Modal
         open={open}
         onClose={handleClose}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
+        closeAfterTransition
+        BackdropComponent={Backdrop}
+        BackdropProps={{
+          timeout: 500,
+        }}
       >
-        <Box sx={style}>
-          {!props.twoFaTurnedOn ? (
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-              }}
-            >
-              <Typography variant="h4" marginBottom="25px">
-                To turn on 2FA
-              </Typography>
-              <Typography variant="subtitle1">
-                1. Download the sastro-auth app
-              </Typography>
-              <Typography variant="subtitle1">
-                2. Open the app and click on "SCAN QRCODE"
-              </Typography>
-              <Typography variant="subtitle1">
-                3. Scan the following QR Code
-              </Typography>
-              <Button
-                onClick={async () => [
-                  await handle2FaUnixT0(
-                    props.props,
-                    props.unixTime,
-                    props.setUnixTime,
-                  ),
-                  setShowQrCode(!showQrCode),
-                ]}
-              >
-                {!showQrCode ? (
-                  <Typography
-                    variant="subtitle2"
-                    display="flex"
-                    alignItems="center"
-                    marginTop="8px"
-                  >
-                    <KeyboardArrowDownIcon />
-                    Show QR Code
-                  </Typography>
-                ) : (
-                  <Typography
-                    variant="subtitle2"
-                    display="flex"
-                    alignItems="center"
-                    marginTop="8px"
-                    marginBottom="2px"
-                  >
-                    <KeyboardArrowUpIcon />
-                    Hide QR Code
-                  </Typography>
-                )}
-              </Button>
-              {showQrCode ? (
-                <QRCodeSVG size={256} value={props.qrCodeValue} />
-              ) : null}
+        <Fade in={open}>
+          <Box sx={style}>
+            {!props.twoFaTurnedOn ? (
               <div
                 style={{
                   display: 'flex',
+                  flexDirection: 'column',
                   alignItems: 'center',
-                  marginTop: '25px',
                 }}
               >
-                <Typography variant="subtitle2">
-                  I have scanned the QR Code
+                <Typography variant="h4" marginBottom="25px">
+                  To turn on 2FA
                 </Typography>
-                <Checkbox
-                  color="primary"
-                  onChange={() => setScannedCodeChecked(!scannedCodeChecked)}
-                />
+                <Typography variant="subtitle1">
+                  1. Download the sastro-auth app
+                </Typography>
+                <Typography variant="subtitle1">
+                  2. Open the app and click on "SCAN QRCODE"
+                </Typography>
+                <Typography variant="subtitle1">
+                  3. Scan the following QR Code
+                </Typography>
                 <Button
-                  variant="contained"
                   onClick={async () => [
-                    await handleContinueClicked(
-                      scannedCodeChecked,
-                      props.setTwoFaSwitchChecked,
+                    await handle2FaUnixT0(
                       props.props,
-                      props.twoFaTurnedOn,
-                      props.setTwoFaTurnedOn,
+                      props.unixTime,
+                      props.setUnixTime,
                     ),
-                    handleClose(),
+                    setShowQrCode(!showQrCode),
                   ]}
                 >
-                  CONTINUE
+                  {!showQrCode ? (
+                    <Typography
+                      variant="subtitle2"
+                      display="flex"
+                      alignItems="center"
+                      marginTop="8px"
+                    >
+                      <KeyboardArrowDownIcon />
+                      Show QR Code
+                    </Typography>
+                  ) : (
+                    <Typography
+                      variant="subtitle2"
+                      display="flex"
+                      alignItems="center"
+                      marginTop="8px"
+                      marginBottom="2px"
+                    >
+                      <KeyboardArrowUpIcon />
+                      Hide QR Code
+                    </Typography>
+                  )}
                 </Button>
+                {showQrCode ? (
+                  <QRCodeSVG size={256} value={props.qrCodeValue} />
+                ) : null}
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    marginTop: '25px',
+                  }}
+                >
+                  <Typography variant="subtitle2">
+                    I have scanned the QR Code
+                  </Typography>
+                  <Checkbox
+                    color="primary"
+                    onChange={() => setScannedCodeChecked(!scannedCodeChecked)}
+                  />
+                  <Button
+                    variant="contained"
+                    onClick={async () => [
+                      await handleContinueClicked(
+                        scannedCodeChecked,
+                        props.setTwoFaSwitchChecked,
+                        props.props,
+                        props.twoFaTurnedOn,
+                        props.setTwoFaTurnedOn,
+                      ),
+                      handleClose(),
+                    ]}
+                  >
+                    CONTINUE
+                  </Button>
+                </div>
               </div>
-            </div>
-          ) : (
-            <Grid container>
-              <Grid item xs={12}>
-                <Typography variant="h6">
-                  Do you really want to turn off 2FA?
-                </Typography>
-              </Grid>
-              <Grid
-                item
-                xs={12}
-                display="flex"
-                justifyContent="center"
-                marginTop="20px"
-              >
-                <Button
-                  onClick={async () => [
-                    await toggle2FaSetting(props.props, true),
-                    props.setTwoFaSwitchChecked(false),
-                    props.setTwoFaTurnedOn(false),
-                    handleClose(),
-                  ]}
+            ) : (
+              <Grid container>
+                <Grid item xs={12}>
+                  <Typography variant="h6">
+                    Do you really want to turn off 2FA?
+                  </Typography>
+                </Grid>
+                <Grid
+                  item
+                  xs={12}
+                  display="flex"
+                  justifyContent="center"
+                  marginTop="20px"
                 >
-                  YES
-                </Button>
-                <Button onClick={() => handleClose()}>NO</Button>
+                  <Button
+                    onClick={async () => [
+                      await toggle2FaSetting(props.props, true),
+                      props.setTwoFaSwitchChecked(false),
+                      props.setTwoFaTurnedOn(false),
+                      handleClose(),
+                    ]}
+                  >
+                    YES
+                  </Button>
+                  <Button onClick={() => handleClose()}>NO</Button>
+                </Grid>
               </Grid>
-            </Grid>
-          )}
-        </Box>
+            )}
+          </Box>
+        </Fade>
       </Modal>
     </div>
   );

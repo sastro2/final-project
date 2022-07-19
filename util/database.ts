@@ -5,7 +5,7 @@ import postgres from 'postgres';
 config();
 
 // for heroku const sql = postgres({ ssl: { rejectUnauthorized: false } });
-const sql = postgres();
+const sql = postgres({ ssl: { rejectUnauthorized: false } });
 
 export let filteredListings: ListingObject | null;
 
@@ -41,6 +41,40 @@ export async function getUserByUsername(username: string) {
       username = ${username}
   `;
   return user && camelcaseKeys(user);
+}
+
+export async function updateUserInformationById(
+  id: number,
+  firstName: string,
+  lastName: string,
+  email: string,
+) {
+  let setFirstName = null;
+  let setLastName = null;
+  let setEmail = null;
+
+  if (firstName) {
+    setFirstName = firstName;
+  }
+
+  if (lastName) {
+    setLastName = lastName;
+  }
+
+  if (email) {
+    setEmail = email;
+  }
+
+  await sql`
+    UPDATE
+      users
+    SET
+      first_name = ${setFirstName},
+      last_name = ${setLastName},
+      email = ${setEmail}
+    WHERE
+      id = ${id}
+  `;
 }
 
 export async function getUserWithPasswordHashByUsername(username: string) {

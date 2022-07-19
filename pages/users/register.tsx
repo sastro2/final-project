@@ -1,7 +1,7 @@
+import { Button } from '@material-ui/core';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
 import CssBaseline from '@mui/material/CssBaseline';
 import Link from '@mui/material/Link';
@@ -113,7 +113,8 @@ export default function Register(props: any) {
                 type="submit"
                 fullWidth
                 variant="contained"
-                sx={{ mt: 3, mb: 2 }}
+                color="primary"
+                style={{ marginTop: '3%', marginBottom: '4%' }}
               >
                 Register
               </Button>

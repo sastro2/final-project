@@ -17,7 +17,7 @@ import Tabs from '@mui/material/Tabs';
 import Cookies from 'cookies';
 import { GetServerSidePropsContext } from 'next';
 import { useRouter } from 'next/router';
-import { SyntheticEvent, useState } from 'react';
+import { ChangeEvent, SyntheticEvent, useState } from 'react';
 import Header from '../../../Components/Layout/Header';
 import ProfileToggle2FaModal from '../../../Components/users/profile/ProfileToggle2FaModal';
 import { generateCsrfToken } from '../../../util/auth';
@@ -34,6 +34,10 @@ export type UserProfileProps = {
   settings?: Settings;
   user?: User;
   reusedRefreshToken?: boolean;
+  csrf?: {
+    id: number;
+    token: string;
+  };
 };
 
 export default function UserDetail(props: UserProfileProps) {
@@ -48,6 +52,15 @@ export default function UserDetail(props: UserProfileProps) {
   const [twoFaModalActive, setTwoFaModalActive] = useState<boolean>(false);
   const [profileEditWindowActive, setProfileEditWindowActive] =
     useState<boolean>(false);
+  const [newFirstName, setNewFirstName] = useState<string | undefined>(
+    props.user?.firstName,
+  );
+  const [newLastName, setNewLastName] = useState<string | undefined>(
+    props.user?.lastName,
+  );
+  const [newEmail, setNewEmail] = useState<string | undefined>(
+    props.user?.email,
+  );
 
   const router = useRouter();
 
@@ -57,6 +70,22 @@ export default function UserDetail(props: UserProfileProps) {
 
   const handleTabChange = (event: SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
+  };
+  const handleUpdateUserInfo = async () => {
+    await fetch('http://localhost:3000/api/userData/setPersonalData', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        userId: props.user?.id,
+        firstName: newFirstName,
+        lastName: newLastName,
+        email: newEmail,
+        csrfToken: props.csrf?.token,
+        csrfSaltId: props.csrf?.id,
+      }),
+    });
   };
 
   if (props.reusedRefreshToken) {
@@ -146,24 +175,25 @@ export default function UserDetail(props: UserProfileProps) {
                 </IconButton>
               </Grid>
               <Grid item xs={12}>
-                <Typography variant="h6">
-                  Name: {props.user?.firstName}
-                </Typography>
+                <Typography variant="h6">Name: {newFirstName}</Typography>
               </Grid>
               <Grid item xs={12}>
-                <Typography variant="h6">
-                  Surname: {props.user?.lastName}
-                </Typography>
+                <Typography variant="h6">Surname: {newLastName}</Typography>
               </Grid>
               <Grid item xs={12}>
-                <Typography variant="h6">Email {props.user?.email}</Typography>
+                <Typography variant="h6">Email: {newEmail}</Typography>
               </Grid>
             </Grid>
           ) : (
             <Grid container rowSpacing={1}>
               <Grid item xs={12} display="flex" justifyContent="space-between">
                 <Typography variant="h5">Personal information</Typography>
-                <IconButton onClick={() => [setProfileEditWindowActive(false)]}>
+                <IconButton
+                  onClick={async () => [
+                    setProfileEditWindowActive(false),
+                    await handleUpdateUserInfo(),
+                  ]}
+                >
                   <SaveIcon />
                 </IconButton>
               </Grid>
@@ -178,6 +208,10 @@ export default function UserDetail(props: UserProfileProps) {
                   <Typography variant="h6">Name:</Typography>
                   <TextField
                     size="small"
+                    label={newFirstName}
+                    onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                      setNewFirstName(event.currentTarget.value)
+                    }
                     style={{ marginLeft: '4%', marginRight: '15%' }}
                     fullWidth
                   />
@@ -187,6 +221,10 @@ export default function UserDetail(props: UserProfileProps) {
                 <Typography variant="h6">Surname:</Typography>
                 <TextField
                   size="small"
+                  label={newLastName}
+                  onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                    setNewLastName(event.currentTarget.value)
+                  }
                   style={{ marginLeft: '4%', marginRight: '15%' }}
                   fullWidth
                 />
@@ -195,6 +233,10 @@ export default function UserDetail(props: UserProfileProps) {
                 <Typography variant="h6">Email:</Typography>
                 <TextField
                   size="small"
+                  label={newEmail}
+                  onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                    setNewEmail(event.currentTarget.value)
+                  }
                   style={{ marginLeft: '4%', marginRight: '15%' }}
                   fullWidth
                 />
@@ -274,7 +316,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       if (!refreshAccessResponseBody.cookies.reusedRefreshToken) {
         cookies.set(refreshAccessResponseBody.cookies.aT);
         const settings = await getSettingsForUserById(userId);
-        console.log(refreshAccessResponseBody.cookies.reusedRefreshToken);
 
         return {
           props: {
@@ -282,6 +323,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
             access: true,
             settings: settings,
             user: user,
+            csrf: csrf,
           },
         };
       }
@@ -312,6 +354,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       console.log('8');
 
       const settings = await getSettingsForUserById(userId);
+      const csrf = await generateCsrfToken();
 
       return {
         props: {
@@ -319,6 +362,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
           access: true,
           settings: settings,
           user: user,
+          csrf: csrf,
         },
       };
     }

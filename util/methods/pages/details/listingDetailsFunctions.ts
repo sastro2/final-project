@@ -5,17 +5,21 @@ export const fetchPointsOfInterest = async (
   listingId: string | null,
   stateFunc: Dispatch<SetStateAction<any>>,
   poiSetFunc: Dispatch<SetStateAction<boolean>>,
+  setLoading: Dispatch<SetStateAction<boolean>>,
+  rapidApiKey: string | undefined,
 ) => {
-  if (!listingId) {
+  if (!listingId || !rapidApiKey) {
     return;
   }
+
+  setLoading(true);
 
   const options = {
     method: 'GET',
     url: 'https://zoopla.p.rapidapi.com/properties/get-nearby',
     params: { listing_id: listingId },
     headers: {
-      'X-RapidAPI-Key': 'a1dc1a29d9msh550f536bda95b23p1b94f7jsn783982c2ea68',
+      'X-RapidAPI-Key': rapidApiKey,
       'X-RapidAPI-Host': 'zoopla.p.rapidapi.com',
     },
   };
@@ -29,6 +33,7 @@ export const fetchPointsOfInterest = async (
       console.error(error);
     });
 
+  setLoading(false);
   poiSetFunc(false);
 };
 

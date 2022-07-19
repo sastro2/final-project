@@ -11,6 +11,7 @@ import Pagination from '@mui/material/Pagination';
 import Select from '@mui/material/Select';
 import axios from 'axios';
 import Cookies from 'cookies';
+import { config } from 'dotenv-safe';
 import { GetServerSidePropsContext } from 'next';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -45,6 +46,7 @@ type PropertyListProps = {
   user?: User;
   rentSearchParams: string | null;
   buySearchParams: string | null;
+  rapidApiKey: string | undefined;
 };
 
 export default function PropertyList(props: PropertyListProps) {
@@ -71,13 +73,11 @@ export default function PropertyList(props: PropertyListProps) {
       beds: string | string[] | undefined,
       price: string | string[] | undefined,
     ) => {
+      if (!props.rapidApiKey) {
+        return;
+      }
+
       setLoading(true);
-
-      /* setPropertyData(oxfordRealEstateData);
-
-      setLoading(false);
-
-      return; */
 
       const toRent = router.query.toRent === '0' ? 'rent' : 'sale';
 
@@ -101,8 +101,7 @@ export default function PropertyList(props: PropertyListProps) {
               page_size: '15',
             },
             headers: {
-              'X-RapidAPI-Key':
-                'a1dc1a29d9msh550f536bda95b23p1b94f7jsn783982c2ea68',
+              'X-RapidAPI-Key': props.rapidApiKey,
               'X-RapidAPI-Host': 'zoopla.p.rapidapi.com',
             },
           };
@@ -123,8 +122,7 @@ export default function PropertyList(props: PropertyListProps) {
               page_size: '15',
             },
             headers: {
-              'X-RapidAPI-Key':
-                'a1dc1a29d9msh550f536bda95b23p1b94f7jsn783982c2ea68',
+              'X-RapidAPI-Key': props.rapidApiKey,
               'X-RapidAPI-Host': 'zoopla.p.rapidapi.com',
             },
           };
@@ -146,8 +144,7 @@ export default function PropertyList(props: PropertyListProps) {
             page_size: '15',
           },
           headers: {
-            'X-RapidAPI-Key':
-              'a1dc1a29d9msh550f536bda95b23p1b94f7jsn783982c2ea68',
+            'X-RapidAPI-Key': props.rapidApiKey,
             'X-RapidAPI-Host': 'zoopla.p.rapidapi.com',
           },
         };
@@ -204,6 +201,7 @@ export default function PropertyList(props: PropertyListProps) {
       props.rentSearchParams,
       currentPage,
       router.query.toRent,
+      props.rapidApiKey
     ],
   );
 
@@ -234,12 +232,16 @@ export default function PropertyList(props: PropertyListProps) {
   const deferredInput: string = useDeferredValue(searchInput);
 
   const autocomplete = useMemo(() => {
+    if(!props.rapidApiKey){
+      return;
+    }
+
     const options = {
       method: 'GET',
       url: 'https://zoopla.p.rapidapi.com/auto-complete',
       params: { search_term: deferredInput },
       headers: {
-        'X-RapidAPI-Key': 'a1dc1a29d9msh550f536bda95b23p1b94f7jsn783982c2ea68',
+        'X-RapidAPI-Key': props.rapidApiKey,
         'X-RapidAPI-Host': 'zoopla.p.rapidapi.com',
       },
     };
@@ -260,7 +262,7 @@ export default function PropertyList(props: PropertyListProps) {
         console.error(error);
         return null;
       });
-  }, [deferredInput]);
+  }, [deferredInput, props.rapidApiKey]);
 
   console.log(autocomplete);
 
@@ -668,14 +670,11 @@ export default function PropertyList(props: PropertyListProps) {
                           alt="agent logo"
                           style={{ maxWidth: '150px' }}
                         />
-                        <p>
-                          <div
-                            dangerouslySetInnerHTML={{
-                              __html: listing.short_description.slice(0, 170),
-                            }}
-                          />
-                          ...
-                        </p>
+                        <div
+                          dangerouslySetInnerHTML={{
+                            __html: listing.short_description.slice(0, 170),
+                          }}
+                        />
                       </div>
                       <Button
                         style={{ justifySelf: 'flex-end', padding: '1%' }}
@@ -758,6 +757,10 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const accessToken = context.req.cookies.aT;
   const refreshToken = context.req.cookies.rT;
 
+  config();
+
+  const rapidApiKey = process.env.RAPIDAPI_KEY;
+
   if (accessToken) {
     const userId = await getUserIdByAccessToken(accessToken);
 
@@ -775,6 +778,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
             rentSearchParams: params.rentSearchParameters
               ? params.rentSearchParameters
               : null,
+            rapidApiKey: rapidApiKey,
           },
         };
       }
@@ -787,6 +791,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
             buySearchParams: params.buySearchParameters
               ? params.buySearchParameters
               : null,
+            rapidApiKey: rapidApiKey,
           },
         };
       }
@@ -796,6 +801,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     return {
       props: {
         loggedIn: false,
+        rapidApiKey: rapidApiKey,
       },
     };
   }
@@ -851,6 +857,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
                 rentSearchParams: params.rentSearchParameters
                   ? params.rentSearchParameters
                   : null,
+                rapidApiKey: rapidApiKey,
               },
             };
           }
@@ -863,6 +870,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
                 buySearchParams: params.buySearchParameters
                   ? params.buySearchParameters
                   : null,
+                rapidApiKey: rapidApiKey,
               },
             };
           }
@@ -883,6 +891,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   return {
     props: {
       loggedIn: false,
+      rapidApiKey: rapidApiKey,
     },
   };
 }

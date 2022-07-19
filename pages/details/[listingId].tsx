@@ -11,13 +11,16 @@ import RoomIcon from '@mui/icons-material/Room';
 import SchoolIcon from '@mui/icons-material/School';
 import TrainIcon from '@mui/icons-material/Train';
 import {
+  Alert,
   Button,
   Card,
   Chip,
   Grid,
   IconButton,
+  Snackbar,
   Typography,
 } from '@mui/material';
+import { config } from 'dotenv-safe';
 import GoogleMapReact from 'google-map-react';
 import { GetServerSidePropsContext } from 'next';
 import Link from 'next/link';
@@ -27,6 +30,8 @@ import Header from '../../Components/Layout/Header';
 import PropertyImageCarousel, {
   CarouselImage,
 } from '../../Components/Property/Carousel';
+import DetailEmailForm from '../../Components/Property/Details/DetailEmailForm';
+import LoadingScreen from '../../Components/util/LoadingScreen';
 import {
   getUserIdByAccessToken,
   getUserIdByRefreshToken,
@@ -45,6 +50,7 @@ type ListingProps = {
   listingId: string;
   loggedIn: boolean;
   user?: User;
+  rapidApiKey: string | undefined;
 };
 
 const Marker = ({ children }: any) => children;
@@ -62,6 +68,11 @@ export default function Listing(props: ListingProps) {
   const [poiSet, setPoiSet] = useState<boolean>(false);
   const [descriptionCollapsed, setDescriptionCollapsed] =
     useState<boolean>(true);
+  const [detailEmailFormShown, setDetailEmailFormShown] =
+    useState<boolean>(false);
+  const [showEmailSuccessSnackbar, setShowEmailSuccessSnackbar] =
+    useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
 
   const fetchPOI = useCallback(
     () =>
@@ -69,8 +80,10 @@ export default function Listing(props: ListingProps) {
         foundListing ? foundListing.listing_id : null,
         setPointsOfInterest,
         setPoiSet,
+        setLoading,
+        props.rapidApiKey,
       ),
-    [foundListing],
+    [foundListing, props.rapidApiKey],
   );
 
   if (pointsOfInterest && foundListing && !poiSet) {
@@ -145,12 +158,22 @@ export default function Listing(props: ListingProps) {
 
   console.log(foundListing);
 
+  if (loading) {
+    return <LoadingScreen />;
+  }
+
   if (foundListing) {
     return (
       <>
+        {detailEmailFormShown ? (
+          <DetailEmailForm
+            setDetailEmailFormShown={setDetailEmailFormShown}
+            setShowEmailSuccessSnackbar={setShowEmailSuccessSnackbar}
+          />
+        ) : null}
         <Header loggedIn={props.loggedIn} user={props.user} />
         <main style={{ display: 'flex' }}>
-          <section style={{ marginLeft: '10%', maxWidth: '800px' }}>
+          <section style={{ marginLeft: '8%', maxWidth: '800px' }}>
             <Button
               onClick={() => {
                 router.back();
@@ -311,16 +334,16 @@ export default function Listing(props: ListingProps) {
               <Grid item xs={12}>
                 <Grid container marginTop="6.8%" paddingBottom="2%">
                   <Grid item xs={6}>
-                    {nearbySecondarySchools ? (
+                    {nearbyPrimarySchools ? (
                       <Typography
-                        key={nearbySecondarySchools[0].name}
+                        key={nearbyPrimarySchools[0].name}
                         variant="subtitle2"
                         gap={2}
                         display="flex"
                         alignItems="center"
                       >
                         <SchoolIcon />
-                        {nearbySecondarySchools[0].name}
+                        {nearbyPrimarySchools[0].name}
                       </Typography>
                     ) : null}
                   </Grid>
@@ -339,6 +362,20 @@ export default function Listing(props: ListingProps) {
                     ) : null}
                   </Grid>
                   <Grid item xs={6}>
+                    {nearbySecondarySchools ? (
+                      <Typography
+                        key={nearbySecondarySchools[0].name}
+                        variant="subtitle2"
+                        gap={2}
+                        display="flex"
+                        alignItems="center"
+                      >
+                        <SchoolIcon />
+                        {nearbySecondarySchools[0].name}
+                      </Typography>
+                    ) : null}
+                  </Grid>
+                  <Grid item xs={6}>
                     {nearbyAirports ? (
                       <Typography
                         key={nearbyAirports[0].name}
@@ -349,20 +386,6 @@ export default function Listing(props: ListingProps) {
                       >
                         <LocalAirportIcon />
                         {nearbyAirports[0].name}
-                      </Typography>
-                    ) : null}
-                  </Grid>
-                  <Grid item xs={6}>
-                    {nearbyPrimarySchools ? (
-                      <Typography
-                        key={nearbyPrimarySchools[0].name}
-                        variant="subtitle2"
-                        gap={2}
-                        display="flex"
-                        alignItems="center"
-                      >
-                        <SchoolIcon />
-                        {nearbyPrimarySchools[0].name}
                       </Typography>
                     ) : null}
                   </Grid>
@@ -468,7 +491,7 @@ export default function Listing(props: ListingProps) {
                 style={{
                   position: 'sticky',
                   top: '5%',
-                  marginLeft: '2%',
+                  marginLeft: '6%',
                   marginTop: '6%',
                   padding: '2%',
                 }}
@@ -504,7 +527,7 @@ export default function Listing(props: ListingProps) {
                     {foundListing.agent_phone}
                   </Grid>
                   <Grid item xs={12} display="flex" justifyContent="center">
-                    <Button>
+                    <Button onClick={() => setDetailEmailFormShown(true)}>
                       <EmailIcon /> Email agent
                     </Button>
                   </Grid>
@@ -512,6 +535,18 @@ export default function Listing(props: ListingProps) {
               </Card>
             </div>
           </section>
+          <Snackbar
+            open={showEmailSuccessSnackbar}
+            onClose={() => setShowEmailSuccessSnackbar(false)}
+          >
+            <Alert
+              onClose={() => setShowEmailSuccessSnackbar(false)}
+              severity="success"
+              sx={{ width: '100%' }}
+            >
+              Email sent!
+            </Alert>
+          </Snackbar>
         </main>
       </>
     );
@@ -520,6 +555,10 @@ export default function Listing(props: ListingProps) {
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const listingId = context.query.listingId;
+
+  config();
+
+  const rapidApiKey = process.env.RAPIDAPI_KEY;
 
   const aT = context.req.cookies.aT;
   const rT = context.req.cookies.rT;
@@ -551,6 +590,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
         listingId: listingId,
         loggedIn: true,
         user: user,
+        rapidApiKey: rapidApiKey,
       },
     };
   }
@@ -559,6 +599,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     props: {
       listingId: listingId,
       loggedIn: false,
+      rapidApiKey: rapidApiKey,
     },
   };
 }

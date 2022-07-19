@@ -14,6 +14,7 @@ import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
 import axios from 'axios';
 import Cookies from 'cookies';
+import { config } from 'dotenv-safe';
 import { GetServerSidePropsContext } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -32,6 +33,7 @@ type HomeProps = {
   loggedIn: boolean;
   user?: User;
   reusedRefreshToken?: boolean;
+  rapidApiKey: string | undefined;
 };
 
 export default function Home(props: HomeProps) {
@@ -52,12 +54,16 @@ export default function Home(props: HomeProps) {
   console.log(deferredInput);
 
   const autocomplete = useMemo(() => {
+    if (!props.rapidApiKey) {
+      return;
+    }
+
     const options = {
       method: 'GET',
       url: 'https://zoopla.p.rapidapi.com/auto-complete',
       params: { search_term: deferredInput },
       headers: {
-        'X-RapidAPI-Key': 'a1dc1a29d9msh550f536bda95b23p1b94f7jsn783982c2ea68',
+        'X-RapidAPI-Key': props.rapidApiKey,
         'X-RapidAPI-Host': 'zoopla.p.rapidapi.com',
       },
     };
@@ -84,7 +90,7 @@ export default function Home(props: HomeProps) {
         console.log(error);
         return null;
       });
-  }, [deferredInput]);
+  }, [deferredInput, props.rapidApiKey]);
 
   console.log(autocomplete);
 
@@ -864,6 +870,10 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const accessToken = context.req.cookies.aT;
   const refreshToken = context.req.cookies.rT;
 
+  config();
+
+  const rapidApiKey = process.env.RAPIDAPI_KEY;
+
   let tokenUserId;
 
   if (refreshToken) {
@@ -881,6 +891,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       return {
         props: {
           loggedIn: false,
+          rapidApiKey: rapidApiKey,
         },
       };
     }
@@ -918,6 +929,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
           props: {
             loggedIn: true,
             user: user,
+            rapidApiKey: rapidApiKey,
           },
         };
       }
@@ -934,6 +946,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     return {
       props: {
         loggedIn: false,
+        rapidApiKey: rapidApiKey,
       },
     };
   }
@@ -951,6 +964,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
         props: {
           loggedIn: true,
           user: user,
+          rapidApiKey: rapidApiKey,
         },
       };
     }
@@ -958,6 +972,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     return {
       props: {
         loggedIn: false,
+        rapidApiKey: rapidApiKey,
       },
     };
   }
@@ -965,6 +980,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   return {
     props: {
       loggedIn: false,
+      rapidApiKey: rapidApiKey,
     },
   };
 }

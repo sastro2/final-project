@@ -5,6 +5,7 @@ import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
 import axios from 'axios';
+import { config } from 'dotenv-safe';
 import { GetServerSidePropsContext } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -20,6 +21,7 @@ import {
 type RentProps = {
   loggedIn: boolean;
   user?: User;
+  rapidApiKey: string | undefined;
 };
 
 export default function Rent(props: RentProps) {
@@ -35,12 +37,16 @@ export default function Rent(props: RentProps) {
   const deferredInput: string = useDeferredValue(searchInput);
 
   const autocomplete = useMemo(() => {
+    if (!props.rapidApiKey) {
+      return;
+    }
+
     const options = {
       method: 'GET',
       url: 'https://zoopla.p.rapidapi.com/auto-complete',
       params: { search_term: deferredInput },
       headers: {
-        'X-RapidAPI-Key': 'a1dc1a29d9msh550f536bda95b23p1b94f7jsn783982c2ea68',
+        'X-RapidAPI-Key': props.rapidApiKey,
         'X-RapidAPI-Host': 'zoopla.p.rapidapi.com',
       },
     };
@@ -67,7 +73,7 @@ export default function Rent(props: RentProps) {
         console.log(error);
         return null;
       });
-  }, [deferredInput]);
+  }, [deferredInput, props.rapidApiKey]);
 
   console.log(autocomplete);
 
@@ -243,6 +249,10 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const rT = context.req.cookies.rT;
   let user;
 
+  config();
+
+  const rapidApiKey = process.env.RAPIDAPI_KEY;
+
   if (aT || rT) {
     console.log('1');
 
@@ -268,6 +278,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       props: {
         loggedIn: true,
         user: user,
+        rapidApiKey: rapidApiKey,
       },
     };
   }
@@ -275,6 +286,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   return {
     props: {
       loggedIn: false,
+      rapidApiKey: rapidApiKey,
     },
   };
 }
