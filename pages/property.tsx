@@ -711,7 +711,7 @@ export default function PropertyList(props: PropertyListProps) {
                           );
                           console.log(sessionStorage.getItem('listingData'));
                           await router.push({
-                            pathname: `http://localhost:3000/details/${listing.listing_id}`,
+                            pathname: `https://home-scout.herokuapp.com/details/${listing.listing_id}`,
                           });
                         }}
                       >
@@ -818,7 +818,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       const csrf = await generateCsrfToken();
 
       const refreshAccessResponse = await fetch(
-        'http://localhost:3000/api/auth/refreshAccess',
+        'https://home-scout.herokuapp.com/api/auth/refreshAccess',
         {
           method: 'POST',
           headers: {

@@ -533,7 +533,7 @@ export default function Map(props: MapProps) {
                           }
                         }
                         await router.push({
-                          pathname: `http://localhost:3000/details/${infoWindowToShow.listing_id}`,
+                          pathname: `https://home-scout.herokuapp.com/details/${infoWindowToShow.listing_id}`,
                         });
                       }}
                     >
@@ -635,7 +635,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       const csrf = await generateCsrfToken();
 
       const refreshAccessResponse = await fetch(
-        'http://localhost:3000/api/auth/refreshAccess',
+        'https://home-scout.herokuapp.com/api/auth/refreshAccess',
         {
           method: 'POST',
           headers: {

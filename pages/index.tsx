@@ -900,7 +900,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     const csrf = await generateCsrfToken();
 
     const refreshAccessResponse = await fetch(
-      'http://localhost:3000/api/auth/refreshAccess',
+      'https://home-scout.herokuapp.com/api/auth/refreshAccess',
       {
         method: 'POST',
         headers: {

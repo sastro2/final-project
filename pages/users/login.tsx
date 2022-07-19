@@ -138,7 +138,7 @@ export default function Login(props: LoginProps) {
       );
 
       const twoFaResponse = await fetch(
-        'http://localhost:3000/api/auth/generateTOTP',
+        'https://home-scout.herokuapp.com/api/auth/generateTOTP',
         {
           method: 'POST',
           headers: {

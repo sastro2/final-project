@@ -38,7 +38,7 @@ export const setParameters = async (
 
   console.log(newParamsString);
 
-  await fetch('http://localhost:3000/api/userData/setParameters', {
+  await fetch('https://home-scout.herokuapp.com/api/userData/setParameters', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
