@@ -12,7 +12,8 @@
     "start": "next start",
     "migrate": "dotenv ley",
     "lint": "next lint",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "heroku-postbuild": "yarn migrate up && yarn build"
   },
   "dependencies": {
     "@emotion/react": "^11.9.3",
