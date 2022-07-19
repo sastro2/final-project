@@ -1,6 +1,6 @@
 import { NextRouter } from 'next/router';
-import { Dispatch, MutableRefObject, SetStateAction } from 'react';
-import { ClusterObject, MarkerObject } from '../../../pages/map';
+import { Dispatch, SetStateAction } from 'react';
+import { ClusterObject, MarkerObject } from '../../../pages/Map';
 
 export const extendBounds = (
   markers: MarkerObject[] | ListingObject,
