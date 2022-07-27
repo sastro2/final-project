@@ -166,11 +166,9 @@ export default function PropertyList(props: PropertyListProps) {
               : null;
 
             if (searchParams) {
-              const transformedData = applySearchParameters(
-                response.data,
-                searchParams,
-                true,
-              );
+              const transformedData = router.query.toRent
+                ? applySearchParameters(response.data, searchParams, true)
+                : applySearchParameters(response.data, searchParams, false);
               if (transformedData) {
                 data = transformedData;
               } else {
@@ -596,7 +594,9 @@ export default function PropertyList(props: PropertyListProps) {
                             }}
                           >
                             <Typography variant="h4">
-                              {router.query.toRent}
+                              {router.query.toRent === '0'
+                                ? `${listing.rental_prices.per_month}£ pcm`
+                                : `${listing.price}£`}
                             </Typography>
                             <Typography
                               style={{
@@ -673,18 +673,15 @@ export default function PropertyList(props: PropertyListProps) {
                         onClick={async () => {
                           if (props.loggedIn && props.userId) {
                             if (listing.listing_status === 'rent') {
-                              console.log('rent');
-
                               await setParameters(
                                 props.userId,
                                 props.rentSearchParams,
-                                1,
+                                listing.rental_prices.per_month,
                                 listing.num_bedrooms,
                                 true,
                               );
                             }
                             if (listing.listing_status === 'sale') {
-                              console.log('sale');
                               await setParameters(
                                 props.userId,
                                 props.buySearchParams,
