@@ -678,7 +678,7 @@ export default function PropertyList(props: PropertyListProps) {
                               await setParameters(
                                 props.userId,
                                 props.rentSearchParams,
-                                listing.rental_prices.per_month,
+                                1,
                                 listing.num_bedrooms,
                                 true,
                               );
