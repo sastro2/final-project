@@ -596,9 +596,7 @@ export default function PropertyList(props: PropertyListProps) {
                             }}
                           >
                             <Typography variant="h4">
-                              {router.query.toRent === '0'
-                                ? `${listing.rental_prices.per_month}£ pcm`
-                                : `${listing.price}£`}
+                              {router.query.toRent}
                             </Typography>
                             <Typography
                               style={{
