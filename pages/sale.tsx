@@ -90,7 +90,7 @@ export default function Sale(props: RentProps) {
         <Card style={{ maxWidth: '400px', padding: '2%' }}>
           <Grid container rowSpacing={5}>
             <Grid item xs={12}>
-              <Typography variant="h5">Property for sale in London</Typography>
+              <Typography variant="h5">Property for sale</Typography>
             </Grid>
             <Grid item xs={12}>
               <AutocompleteInputBox
@@ -292,7 +292,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const rapidApiKey = process.env.RAPIDAPI_KEY;
 
   if (aT || rT) {
-
     if (aT) {
       const userId = await getUserIdByAccessToken(aT);
 

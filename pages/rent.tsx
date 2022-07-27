@@ -90,7 +90,7 @@ export default function Rent(props: RentProps) {
         <Card style={{ maxWidth: '400px', padding: '2%' }}>
           <Grid container rowSpacing={5}>
             <Grid item xs={12}>
-              <Typography variant="h5">Property to rent in London</Typography>
+              <Typography variant="h5">Property to rent</Typography>
             </Grid>
             <Grid item xs={12}>
               <AutocompleteInputBox
