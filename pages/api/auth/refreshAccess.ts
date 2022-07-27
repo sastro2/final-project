@@ -54,8 +54,6 @@ export default async function refreshAccessHandler(
 
     const token = await getRefreshToken(request.body.refreshToken);
 
-    console.log(token, request.body.userId);
-
     if (!token || token.userId !== request.body.userId) {
       response.status(403).json({
         errors: [

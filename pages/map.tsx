@@ -185,24 +185,19 @@ export default function Map(props: MapProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage]);
 
-  console.log(mapBounds, mapZoom);
-
   useEffect(() => {
     if (checkIfMarkerObjects(objectsToDisplay)) {
       extendBounds(objectsToDisplay as MarkerObject[], markerBounds);
-      console.log('works');
       mapRef.current.fitBounds(markerBounds);
     } else {
       if (propertyData && mapHasLoaded) {
         extendBounds(propertyData, markerBounds);
-        console.log(mapRef.current, markerBounds, 'asdasd');
         mapRef.current.fitBounds(markerBounds);
       }
     }
   }, [objectsToDisplay, mapHasLoaded]);
 
   useEffect(() => {
-    console.log(propertyData, ' hi');
 
     initializeClusters(router, propertyData, setObjectsToDisplay);
   }, [rerender, router]);
@@ -583,7 +578,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     if (userId) {
       const user = await getUserWith2FaSecretById(userId.userId);
       const params = await getSearchParamsForUserById(userId.userId, true);
-      console.log('1', params);
 
       if (params && 'rentSearchParameters' in params) {
         return {
@@ -614,7 +608,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
         };
       }
     }
-    console.log('2');
 
     return {
       props: {
@@ -625,12 +618,10 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
   if (refreshToken) {
     const userId = await getUserIdByRefreshToken(refreshToken);
-    console.log(userId, 'hi');
 
     const cookies = new Cookies(context.req, context.res);
 
     if (userId) {
-      console.log('why');
 
       const csrf = await generateCsrfToken();
 
@@ -653,8 +644,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       const refreshAccessResponseBody =
         (await refreshAccessResponse.json()) as RefreshAccessResponseBody;
 
-      console.log(refreshAccessResponseBody);
-
       if ('cookies' in refreshAccessResponseBody) {
         cookies.set(refreshAccessResponseBody.cookies.rT);
 
@@ -663,7 +652,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
           const params = await getSearchParamsForUserById(userId.userId, true);
           const user = await getUserWith2FaSecretById(userId.userId);
-          console.log('3', params);
 
           if (params && 'rentSearchParameters' in params) {
             return {
@@ -694,7 +682,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
             };
           }
         }
-        console.log('4');
 
         return {
           props: {
@@ -705,7 +692,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       }
     }
   }
-  console.log('5');
 
   return {
     props: {

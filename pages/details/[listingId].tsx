@@ -152,12 +152,6 @@ export default function Listing(props: ListingProps) {
     }
   }, [listingData, props.listingId]);
 
-  if (nearbyAirports) {
-    console.log(nearbyAirports[0].name);
-  }
-
-  console.log(foundListing);
-
   if (loading) {
     return <LoadingScreen />;
   }
@@ -565,8 +559,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   let user;
 
   if (aT || rT) {
-    console.log('1');
-
     if (aT) {
       const userId = await getUserIdByAccessToken(aT);
 
@@ -575,7 +567,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       }
     }
     if (!user) {
-      console.log('2');
       const userId = await getUserIdByRefreshToken(rT);
 
       if (userId) {

@@ -31,8 +31,6 @@ export const handle2FaUnixT0 = async (
 
     setUnixTime(currentTime);
     if (props.user) {
-      console.log('set2FaUnixt0');
-
       await fetch('/api/settings/set2FaUnixT0', {
         method: 'POST',
         headers: {

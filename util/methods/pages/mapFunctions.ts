@@ -6,7 +6,6 @@ export const extendBounds = (
   markers: MarkerObject[] | ListingObject,
   markerBounds: any,
 ) => {
-  console.log(markers, markerBounds, 'here');
   if (Array.isArray(markers)) {
     markers.forEach((marker) => {
       markerBounds.extend({
@@ -15,7 +14,6 @@ export const extendBounds = (
       });
     });
   } else {
-    console.log(markers, markerBounds, 'right here');
 
     markers.listing.forEach((listing) => {
       markerBounds.extend({
@@ -24,7 +22,6 @@ export const extendBounds = (
       });
     });
 
-    console.log(markerBounds);
   }
 };
 

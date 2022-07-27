@@ -11,7 +11,6 @@ export const handleSettingsStateChange = (
   ref: RefObject<any>,
   state: Dispatch<SetStateAction<any>>,
 ) => {
-  console.log(ref.current.value);
 
   state(ref.current.value);
 };

@@ -58,8 +58,6 @@ export default function Rent(props: RentProps) {
       .then(function (response) {
         data = response.data as AutocompleteObject | undefined;
 
-        console.log(data, deferredInput);
-
         if (data && deferredInput) {
           setAutocompleteResult(data.suggestions);
         } else {
@@ -254,8 +252,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const rapidApiKey = process.env.RAPIDAPI_KEY;
 
   if (aT || rT) {
-    console.log('1');
-
     if (aT) {
       const userId = await getUserIdByAccessToken(aT);
 
@@ -264,7 +260,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       }
     }
     if (!user) {
-      console.log('2');
       const userId = await getUserIdByRefreshToken(rT);
 
       if (userId) {

@@ -28,7 +28,6 @@ export default async function setPersonalData(
       response.status(400).send('Only strings as input allowed');
       return;
     }
-    console.log('2');
 
     const csrfTokenMatches = await verifyCsrfToken(
       request.body.csrfToken,
@@ -45,7 +44,6 @@ export default async function setPersonalData(
       });
       return;
     }
-    console.log('3');
 
     await updateUserInformationById(
       request.body.userId,

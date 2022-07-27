@@ -5,8 +5,6 @@ export const setParameters = async (
   beds: number,
   toRent: boolean,
 ) => {
-  console.log('params');
-
   const parsedParams: SearchParameters[] = params ? JSON.parse(params) : [];
 
   let newObject: SearchParameters;
@@ -23,8 +21,6 @@ export const setParameters = async (
     };
   }
 
-  console.log(newObject);
-
   const newParams: SearchParameters[] = parsedParams;
 
   if (parsedParams.length >= 100) {
@@ -35,8 +31,6 @@ export const setParameters = async (
   }
 
   const newParamsString = JSON.stringify(newParams);
-
-  console.log(newParamsString);
 
   await fetch('https://home-scout.herokuapp.com/api/userData/setParameters', {
     method: 'POST',

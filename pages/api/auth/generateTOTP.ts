@@ -92,17 +92,10 @@ export default async function TotpHandler(
           },
         );
 
-        console.log(
-          user2FaData.twofaSecret,
-          user2FaData.twofaUnixT0,
-          request.body.currentDate,
-        );
-
         const totpResponseBody =
           (await totpResponse.json()) as TotpResponseBody;
 
         if ('password' in totpResponseBody) {
-          console.log(totpResponseBody.password);
           if (totpResponseBody.password === request.body.passwordInput) {
             const tokens = await generateSessionTokens(userWithPasswordHash);
             if (tokens) {

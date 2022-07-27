@@ -47,11 +47,7 @@ export default function Home(props: HomeProps) {
   >([]);
   const [selectedTab, setSelectedTab] = useState<number>(0);
 
-  console.log(searchInput, autocompleteResult, selectedOption);
-
   const deferredInput: string = useDeferredValue(searchInput);
-
-  console.log(deferredInput);
 
   const autocomplete = useMemo(() => {
     if (!props.rapidApiKey) {
@@ -74,8 +70,6 @@ export default function Home(props: HomeProps) {
       .request(options)
       .then(function (response) {
         data = response.data as AutocompleteObject | undefined;
-
-        console.log(data, deferredInput);
 
         if (data && deferredInput) {
           setAutocompleteResult(data.suggestions);
@@ -883,10 +877,8 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const cookies = new Cookies(context.req, context.res);
 
   if (!accessToken && tokenUserId?.userId) {
-    console.log('1');
 
     if (!refreshToken) {
-      console.log('2');
 
       return {
         props: {
@@ -895,7 +887,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
         },
       };
     }
-    console.log('4');
     const user = await getUserWith2FaSecretById(tokenUserId.userId);
     const csrf = await generateCsrfToken();
 
@@ -923,7 +914,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
       if (!refreshAccessResponseBody.cookies.reusedRefreshToken) {
         cookies.set(refreshAccessResponseBody.cookies.aT);
-        console.log(refreshAccessResponseBody.cookies.reusedRefreshToken);
 
         return {
           props: {
@@ -941,7 +931,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
         },
       };
     }
-    console.log('6');
 
     return {
       props: {
@@ -952,13 +941,11 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   }
 
   if (accessToken) {
-    console.log('7');
 
     const accessUserId = await getUserIdByAccessToken(accessToken);
 
     if (accessUserId?.userId) {
       const user = await getUserWith2FaSecretById(accessUserId.userId);
-      console.log('8');
 
       return {
         props: {

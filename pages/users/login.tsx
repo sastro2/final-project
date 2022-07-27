@@ -62,8 +62,6 @@ export default function Login(props: LoginProps) {
 
   const router = useRouter();
 
-  console.log(twoFaWindowActive);
-
   const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -129,14 +127,6 @@ export default function Login(props: LoginProps) {
 
       const currentDate = Date.now();
 
-      console.log(
-        passwordInput,
-        twoFaUserID,
-        twoFaUsername,
-        twoFaPassword,
-        currentDate,
-      );
-
       const twoFaResponse = await fetch(
         'https://home-scout.herokuapp.com/api/auth/generateTOTP',
         {
@@ -166,7 +156,6 @@ export default function Login(props: LoginProps) {
           await router.push('/');
         }
         if (!twoFaResponseBody.passwordMatches) {
-          console.log('worked2');
         }
       }
     }

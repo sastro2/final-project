@@ -15,8 +15,6 @@ export default async function setParametersHandler(
   request: SetParamsNextApiRequest,
   response: NextApiResponse,
 ) {
-  console.log('hi');
-
   if (request.method === 'POST') {
     await setSearchParamsForUserById(
       request.body.userId,

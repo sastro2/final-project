@@ -4,8 +4,6 @@ const calculateRoomsWeight = (
 ): number => {
   let difference = averageRooms - +listing.num_bedrooms;
 
-  console.log(difference, averageRooms, +listing.num_bedrooms);
-
   switch (true) {
     case (difference <= 0 && difference > -1) ||
       (difference >= 0 && difference < 1): {
@@ -19,13 +17,6 @@ const calculateRoomsWeight = (
   }
 
   const weight = 1 / difference;
-
-  console.log(
-    averageRooms,
-    listing.num_bedrooms,
-    typeof listing.num_bedrooms,
-    weight,
-  );
 
   return weight;
 };
@@ -44,7 +35,6 @@ const calculatePriceWeight = (
 
   const weight = 1 / priceDelta;
 
-  console.log(weight);
   return weight;
 };
 const calculateRentWeight = (
@@ -77,7 +67,6 @@ const calculateRandomFactor = (listingId: string): number => {
     listingIdAsStringArray[listingIdAsStringArray.length - 1],
   );
 
-  console.log(digit);
 
   return 1 - digit / 100;
 };
@@ -89,22 +78,12 @@ export const applySearchParameters = (
 ): ListingObject | null => {
   let weightedListing: { listingId: string; weight: number }[] | null = null;
 
-  console.log('hi');
-
   if (toRent) {
-    console.log(searchParams);
 
     const parsedParams: RentParameters[] | null = JSON.parse(searchParams);
     if (parsedParams) {
       const calculatedTotalParams = parsedParams.reduce(
         (accumulator, currentParam) => {
-          console.log(
-            accumulator.rent,
-            typeof accumulator.rent,
-            currentParam.averageRent,
-            typeof currentParam.averageRent,
-            'acc and current',
-          );
 
           return {
             rent: accumulator.rent + currentParam.averageRent,
@@ -117,8 +96,6 @@ export const applySearchParameters = (
         averageRent: calculatedTotalParams.rent / parsedParams.length,
         averageRooms: calculatedTotalParams.rooms / parsedParams.length,
       };
-
-      console.log(averageParams);
 
       weightedListing = data.listing.map((listing) => {
         const weight =
@@ -165,7 +142,6 @@ export const applySearchParameters = (
     }
   }
 
-  console.log(weightedListing);
 
   const sortArray = (
     a: { listingId: string; weight: number },

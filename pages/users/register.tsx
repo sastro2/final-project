@@ -55,8 +55,6 @@ export default function Register(props: any) {
       }),
     });
 
-    console.log(registerResponse);
-
     await router.push('/');
   };
 

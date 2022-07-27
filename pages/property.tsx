@@ -66,6 +66,8 @@ export default function PropertyList(props: PropertyListProps) {
 
   const router = useRouter();
 
+  console.log(router.query.toRent);
+
   const fetchData = useCallback(
     async (
       identifier: string | string[] | undefined,
@@ -128,8 +130,6 @@ export default function PropertyList(props: PropertyListProps) {
           };
         }
       } else {
-        console.log('here', area, identifier);
-
         options = {
           method: 'GET',
           url: 'https://zoopla.p.rapidapi.com/properties/list',
@@ -155,7 +155,6 @@ export default function PropertyList(props: PropertyListProps) {
       await axios
         .request(options)
         .then(function (response) {
-          console.log(response.data, props.loggedIn);
           if (
             props.loggedIn &&
             (props.rentSearchParams || props.buySearchParams)
@@ -165,8 +164,6 @@ export default function PropertyList(props: PropertyListProps) {
               : props.buySearchParams
               ? props.buySearchParams
               : null;
-
-            console.log(searchParams);
 
             if (searchParams) {
               const transformedData = applySearchParameters(
@@ -190,8 +187,6 @@ export default function PropertyList(props: PropertyListProps) {
           console.error(error);
         });
 
-      console.log(data);
-
       setPropertyData(data);
       setLoading(false);
     },
@@ -201,13 +196,11 @@ export default function PropertyList(props: PropertyListProps) {
       props.rentSearchParams,
       currentPage,
       router.query.toRent,
-      props.rapidApiKey
+      props.rapidApiKey,
     ],
   );
 
   useEffect(() => {
-    console.log('useEffect');
-
     fetchData(
       router.query.identifier,
       router.query.value,
@@ -232,7 +225,7 @@ export default function PropertyList(props: PropertyListProps) {
   const deferredInput: string = useDeferredValue(searchInput);
 
   const autocomplete = useMemo(() => {
-    if(!props.rapidApiKey){
+    if (!props.rapidApiKey) {
       return;
     }
 
@@ -275,8 +268,6 @@ export default function PropertyList(props: PropertyListProps) {
   }
 
   if (objectsToDisplay) {
-    console.log(autocompleteResult);
-
     return (
       <>
         <Header loggedIn={props.loggedIn} user={props.user} />
@@ -695,6 +686,7 @@ export default function PropertyList(props: PropertyListProps) {
                               );
                             }
                             if (listing.listing_status === 'sale') {
+                              console.log('sale');
                               await setParameters(
                                 props.userId,
                                 props.buySearchParams,
@@ -709,7 +701,6 @@ export default function PropertyList(props: PropertyListProps) {
                             'listingData',
                             JSON.stringify(propertyData),
                           );
-                          console.log(sessionStorage.getItem('listingData'));
                           await router.push({
                             pathname: `https://home-scout.herokuapp.com/details/${listing.listing_id}`,
                           });
@@ -743,8 +734,6 @@ export default function PropertyList(props: PropertyListProps) {
           }
           page={currentPage}
           onChange={(event, value) => {
-            console.log(currentPage);
-
             setCurrentPage(value);
           }}
         />
@@ -767,7 +756,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     if (userId) {
       const params = await getSearchParamsForUserById(userId.userId, true);
       const user = await getUserWith2FaSecretById(userId.userId);
-      console.log('1', params);
 
       if (params && 'rentSearchParameters' in params) {
         return {
@@ -796,7 +784,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
         };
       }
     }
-    console.log('2');
 
     return {
       props: {
@@ -808,13 +795,10 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
   if (refreshToken) {
     const userId = await getUserIdByRefreshToken(refreshToken);
-    console.log(await getUserIdByRefreshToken(refreshToken), 'hi');
 
     const cookies = new Cookies(context.req, context.res);
 
     if (userId) {
-      console.log('why');
-
       const csrf = await generateCsrfToken();
 
       const refreshAccessResponse = await fetch(
@@ -836,8 +820,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       const refreshAccessResponseBody =
         (await refreshAccessResponse.json()) as RefreshAccessResponseBody;
 
-      console.log(refreshAccessResponseBody);
-
       if ('cookies' in refreshAccessResponseBody) {
         cookies.set(refreshAccessResponseBody.cookies.rT);
 
@@ -846,7 +828,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
           const params = await getSearchParamsForUserById(userId.userId, true);
           const user = await getUserWith2FaSecretById(userId.userId);
-          console.log('3', params);
 
           if (params && 'rentSearchParameters' in params) {
             return {
@@ -875,7 +856,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
             };
           }
         }
-        console.log('4');
 
         return {
           props: {
@@ -886,7 +866,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       }
     }
   }
-  console.log('5');
 
   return {
     props: {

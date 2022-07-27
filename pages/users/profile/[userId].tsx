@@ -72,20 +72,23 @@ export default function UserDetail(props: UserProfileProps) {
     setActiveTab(newValue);
   };
   const handleUpdateUserInfo = async () => {
-    await fetch('https://home-scout.herokuapp.com/api/userData/setPersonalData', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+    await fetch(
+      'https://home-scout.herokuapp.com/api/userData/setPersonalData',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: props.user?.id,
+          firstName: newFirstName,
+          lastName: newLastName,
+          email: newEmail,
+          csrfToken: props.csrf?.token,
+          csrfSaltId: props.csrf?.id,
+        }),
       },
-      body: JSON.stringify({
-        userId: props.user?.id,
-        firstName: newFirstName,
-        lastName: newLastName,
-        email: newEmail,
-        csrfToken: props.csrf?.token,
-        csrfSaltId: props.csrf?.id,
-      }),
-    });
+    );
   };
 
   if (props.reusedRefreshToken) {
@@ -266,11 +269,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const cookies = new Cookies(context.req, context.res);
 
   if (!accessToken && userId) {
-    console.log('1');
-
     if (!refreshToken) {
-      console.log('2');
-
       return {
         props: {
           access: false,
@@ -279,15 +278,12 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     }
 
     if (!(userId === tokenUserId?.userId)) {
-      console.log('3');
-
       return {
         props: {
           access: false,
         },
       };
     }
-    console.log('4');
     const user = await getUserWith2FaSecretById(userId);
     const csrf = await generateCsrfToken();
 
@@ -335,7 +331,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
         },
       };
     }
-    console.log('6');
 
     return {
       props: {
@@ -345,13 +340,10 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   }
 
   if (accessToken && userId) {
-    console.log('7');
-
     const accessUserId = await getUserIdByAccessToken(accessToken);
 
     if (userId === accessUserId?.userId) {
       const user = await getUserWith2FaSecretById(userId);
-      console.log('8');
 
       const settings = await getSettingsForUserById(userId);
       const csrf = await generateCsrfToken();
