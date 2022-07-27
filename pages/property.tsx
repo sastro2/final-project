@@ -166,9 +166,10 @@ export default function PropertyList(props: PropertyListProps) {
               : null;
 
             if (searchParams) {
-              const transformedData = router.query.toRent
-                ? applySearchParameters(response.data, searchParams, true)
-                : applySearchParameters(response.data, searchParams, false);
+              const transformedData =
+                router.query.toRent === '0'
+                  ? applySearchParameters(response.data, searchParams, true)
+                  : applySearchParameters(response.data, searchParams, false);
               if (transformedData) {
                 data = transformedData;
               } else {
